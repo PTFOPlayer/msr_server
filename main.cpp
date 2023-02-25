@@ -7,48 +7,67 @@
 #include <string.h>
 #include <time.h>
 #include <iostream>
+#include <dirent.h>
+#include <stdio.h>
+
+#define MSR_PKG_ENERGY_STATUS 0x611
+#define MSR_POWER_UNIT 0x606
+#define MSR_VOLTAGE 0x198
+#define MSR_TEMPERATURE_STATUS 0x19c
+#define MSR_TEMPERATURE_TARGET 0x1a2
+#define MSR_MISC_ENABLE 0x1a0
+
+#define TIME_MUL 10
 
 using namespace std;
 
 int msleep(long msec)
 {
-    struct timespec ts;
-    int res;
+	struct timespec ts;
+	int res;
 
-    if (msec < 0)
-    {
-        errno = EINVAL;
-        return -1;
-    }
+	if (msec < 0)
+	{
+		errno = EINVAL;
+		return -1;
+	}
 
-    ts.tv_sec = msec / 1000;
-    ts.tv_nsec = (msec % 1000) * 1000000;
+	ts.tv_sec = msec / 1000;
+	ts.tv_nsec = (msec % 1000) * 1000000;
 
-    do {
-        res = nanosleep(&ts, &ts);
-    } while (res && errno == EINTR);
+	do
+	{
+		res = nanosleep(&ts, &ts);
+	} while (res && errno == EINTR);
 
-    return res;
+	return res;
 }
 
-static int open_msr(int core) {
+static int open_msr(int core)
+{
 
 	char msr_filename[BUFSIZ];
 	int fd;
 
 	sprintf(msr_filename, "/dev/cpu/%d/msr", core);
 	fd = open(msr_filename, O_RDONLY);
-	if ( fd < 0 ) {
-		if ( errno == ENXIO ) {
+	if (fd < 0)
+	{
+		if (errno == ENXIO)
+		{
 			fprintf(stderr, "rdmsr: No CPU %d\n", core);
 			exit(2);
-		} else if ( errno == EIO ) {
+		}
+		else if (errno == EIO)
+		{
 			fprintf(stderr, "rdmsr: CPU %d doesn't support MSRs\n",
 					core);
 			exit(3);
-		} else {
+		}
+		else
+		{
 			perror("rdmsr:open");
-			fprintf(stderr,"Trying to open %s\n",msr_filename);
+			fprintf(stderr, "Trying to open %s\n", msr_filename);
 			exit(127);
 		}
 	}
@@ -56,11 +75,13 @@ static int open_msr(int core) {
 	return fd;
 }
 
-static long long read_msr(int fd, int which) {
+static long long read_msr(int fd, int which)
+{
 
 	uint64_t data;
 
-	if ( pread(fd, &data, sizeof data, which) != sizeof data ) {
+	if (pread(fd, &data, sizeof data, which) != sizeof data)
+	{
 		perror("rdmsr:pread");
 		exit(127);
 	}
@@ -68,50 +89,138 @@ static long long read_msr(int fd, int which) {
 	return (long long)data;
 }
 
-#define MSR_PKG_ENERGY_STATUS 0x611
-#define MSR_RAPL_POWER_UNIT	0x606
-#define MSR_VOLTAGE 0x198
+static unsigned long long lastTotalUser, lastTotalUserLow, lastTotalSys, lastTotalIdle;
 
-int main(int argc, char const *argv[]) {
-        
+double get_cpu_usage()
+{
+	double percent;
+	FILE *file;
+	unsigned long long totalUser, totalUserLow, totalSys, totalIdle, total;
 
-	
-    int fd;
+	file = fopen("/proc/stat", "r");
+	fscanf(file, "cpu %llu %llu %llu %llu", &totalUser, &totalUserLow,
+		   &totalSys, &totalIdle);
+	fclose(file);
+
+	if (totalUser < lastTotalUser || totalUserLow < lastTotalUserLow ||
+		totalSys < lastTotalSys || totalIdle < lastTotalIdle)
+		percent = -1.0;
+	else
+	{
+		total = (totalUser - lastTotalUser) + (totalUserLow - lastTotalUserLow) +
+				(totalSys - lastTotalSys);
+		percent = total;
+		total += (totalIdle - lastTotalIdle);
+		percent /= total;
+		percent *= 100;
+	}
+
+	lastTotalUser = totalUser;
+	lastTotalUserLow = totalUserLow;
+	lastTotalSys = totalSys;
+	lastTotalIdle = totalIdle;
+
+	return percent;
+}
+
+double get_cpu_voltage(int fd)
+{
+	long long result = read_msr(fd, MSR_VOLTAGE);
+	double voltage = (double)(result >> 32);
+	return voltage / 8192;
+}
+
+double get_package_power_before(int fd, double cpu_energy_units)
+{
+	long long result = read_msr(fd, MSR_PKG_ENERGY_STATUS);
+	double package_before = (double)result * cpu_energy_units;
+	return package_before;
+}
+
+double get_package_power_after(int fd, double cpu_energy_units)
+{
+	long long result = read_msr(fd, MSR_PKG_ENERGY_STATUS);
+	double package_after = (double)result * cpu_energy_units;
+	return package_after;
+}
+
+double get_cpu_temperature(int fd)
+{
 	long long result;
-	double power_units,time_units;
-	double cpu_energy_units;
-    double package_before, package_after;
-    double voltage;
-    int time_mul = 10;
 
-	while (true) {
-    	fd=open_msr(0);
+	result = read_msr(fd, MSR_TEMPERATURE_STATUS);
+	double t1 = (double)((result >> 16) & ((1 << 6) - 1));
 
-		result=read_msr(fd,MSR_RAPL_POWER_UNIT);
-    	power_units=pow(0.5,(double)(result&0xf));
-		cpu_energy_units=pow(0.5,(double)((result>>8)&0x1f));
-		time_units=pow(0.5,(double)((result>>16)&0xf));
+	result = read_msr(fd, MSR_TEMPERATURE_TARGET);
+	double t2 = (double)((result >> 16) & ((1 << 7) - 1));
 
-    	result=read_msr(fd,MSR_VOLTAGE);
-    	voltage = (double)(result >> 32);
+	return t2 - t1;
+}
 
-		result=read_msr(fd,MSR_PKG_ENERGY_STATUS);
-		package_before=(double)result*cpu_energy_units;
-    	close(fd);
+int get_cpu_threads()
+{
+	DIR *d;
+	struct dirent *dir;
+	d = opendir("/dev/cpu/");
+	unsigned int t = 0;
+	if (d)
+	{
+		while ((dir = readdir(d)) != NULL)
+		{
+			if (strchr(dir->d_name, '.') == NULL)
+				t += 1;
+		}
+		closedir(d);
+	}
+	return t;
+}
 
-    	msleep(1000/time_mul);
+bool get_cpu_ht(int fd)
+{
+	long long result = read_msr(fd, MSR_MISC_ENABLE);
+	bool ht = (bool)(result & 24);
+	return ht;
+}
 
-    	fd=open_msr(0);
-    	result=read_msr(fd,MSR_PKG_ENERGY_STATUS);
-		package_after =(double)result*cpu_energy_units;
-    	close(fd);
+int main(int argc, char const *argv[])
+{
+
+	int fd;
+	long long result;
+	double cpu_energy_units, package_before, package_after;
+	double package_power;
+	fd = open_msr(0);
+
+	while (true)
+	{
+
+		result = read_msr(fd, MSR_POWER_UNIT);
+		cpu_energy_units = pow(0.5, (double)((result >> 8) & 0x1f));
+
+		package_before = get_package_power_before(fd, cpu_energy_units);
+		msleep(1000 / TIME_MUL);
+		package_after = get_package_power_after(fd, cpu_energy_units);
+
+		package_power = (package_after - package_before) * TIME_MUL;
 
 		ofstream file;
 		string fielpath = "/msr_data.toml";
+
 		file.open(fielpath);
-		file << "[keys]" << "\n" <<  
-			"power = " << (package_after - package_before) * time_mul << "\n" 
-			"voltage = " << voltage / 8192 << "\n";
+		file << "[cpu]"
+			 << "\n"
+				"power = "
+			 << package_power << "\n"
+								 "voltage = "
+			 << get_cpu_voltage(fd) << "\n"
+									   "usage = "
+			 << get_cpu_usage() << "\n"
+								   "temperature = "
+			 << get_cpu_temperature(fd) << "\n"
+										   "thread_count = "
+			 << get_cpu_threads() << "\n"
+									 "hyper_threading = "
+			 << get_cpu_ht(fd) << "\n";
 		file.close();
 	}
 }

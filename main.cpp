@@ -43,6 +43,13 @@ int msleep(long msec)
 	return res;
 }
 
+void cpuID(unsigned i, unsigned regs[4])
+{
+	asm volatile("cpuid"
+				 : "=a"(regs[0]), "=b"(regs[1]), "=c"(regs[2]), "=d"(regs[3])
+				 : "a"(i), "c"(0));
+}
+
 static int open_msr(int core)
 {
 
@@ -182,6 +189,49 @@ bool get_cpu_ht(int fd)
 	return ht;
 }
 
+unsigned regs[4];
+string get_cpu_vendor()
+{
+	char vendor[12];
+	cpuID(0, regs);
+	((unsigned *)vendor)[0] = regs[1]; // EBX
+	((unsigned *)vendor)[1] = regs[3]; // EDX
+	((unsigned *)vendor)[2] = regs[2]; // ECX
+	return string(vendor, 12);
+}
+
+typedef struct cpu_cores
+{
+	unsigned logical;
+	unsigned physical;
+} cpu_cores;
+
+cpu_cores get_cpu_cores()
+{
+	string cpuVendor = get_cpu_vendor();
+
+	cpuID(1, regs);
+	unsigned cpuFeatures = regs[3];
+	cpuID(1, regs);
+	unsigned logical = ((regs[1] >> 16) & 0xff) / 2;
+	unsigned cores = logical;
+
+	if (cpuVendor == "GenuineIntel")
+	{
+		// Get DCP cache info
+		cpuID(4, regs);
+		cores = (((regs[0] >> 26) & 0x3f) + 1) / 2;
+	}
+	else if (cpuVendor == "AuthenticAMD")
+	{
+		cpuID(0x80000008, regs);
+		cores = (((unsigned)(regs[2] & 0xff)) + 1) / 2;
+	}
+	return {
+		logical,
+		cores};
+}
+
 int main(int argc, char const *argv[])
 {
 
@@ -191,9 +241,10 @@ int main(int argc, char const *argv[])
 	double package_power;
 	fd = open_msr(0);
 
+	cout << get_cpu_vendor() << endl;
+
 	while (true)
 	{
-
 		result = read_msr(fd, MSR_POWER_UNIT);
 		cpu_energy_units = pow(0.5, (double)((result >> 8) & 0x1f));
 
@@ -209,18 +260,22 @@ int main(int argc, char const *argv[])
 		file.open(fielpath);
 		file << "[cpu]"
 			 << "\n"
-				"power = "
+			 << "power = "
 			 << package_power << "\n"
-								 "voltage = "
+			 << "voltage = "
 			 << get_cpu_voltage(fd) << "\n"
-									   "usage = "
+			 << "usage = "
 			 << get_cpu_usage() << "\n"
-								   "temperature = "
+			 << "temperature = "
 			 << get_cpu_temperature(fd) << "\n"
-										   "thread_count = "
+			 << "thread_count = "
 			 << get_cpu_threads() << "\n"
-									 "hyper_threading = "
-			 << get_cpu_ht(fd) << "\n";
+			 << "hyper_threading = "
+			 << get_cpu_ht(fd) << "\n"
+			 << "logical_cores = " 
+			 << get_cpu_cores().logical << "\n"
+			 << "physical_cores = "
+			 << get_cpu_cores().physical << "\n";
 		file.close();
 	}
 }

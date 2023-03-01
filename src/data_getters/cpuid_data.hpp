@@ -21,6 +21,33 @@ string get_cpu_vendor()
 	return string(vendor, 12);
 }
 
+string get_cpu_name() {
+	cpuID(0x80000002, regs);
+	string cpu_name = "";
+	char temp[16];
+	((unsigned *)temp)[0] = regs[0]; // EAX
+	((unsigned *)temp)[1] = regs[1]; // EBX
+	((unsigned *)temp)[2] = regs[2]; // ECX
+	((unsigned *)temp)[3] = regs[3]; // EDX
+	cpu_name += string(temp, 16);
+
+	cpuID(0x80000003, regs);
+	((unsigned *)temp)[0] = regs[0]; // EAX
+	((unsigned *)temp)[1] = regs[1]; // EBX
+	((unsigned *)temp)[2] = regs[2]; // ECX
+	((unsigned *)temp)[3] = regs[3]; // EDX
+	cpu_name += string(temp, 16);
+
+	cpuID(0x80000004, regs);
+	((unsigned *)temp)[0] = regs[0]; // EAX
+	((unsigned *)temp)[1] = regs[1]; // EBX
+	((unsigned *)temp)[2] = regs[2]; // ECX
+	((unsigned *)temp)[3] = regs[3]; // EDX
+	cpu_name += string(temp, 16);
+
+	return cpu_name;
+}
+
 typedef struct cpu_cores
 {
 	unsigned logical;
@@ -52,3 +79,4 @@ cpu_cores get_cpu_cores()
 		logical,
 		cores};
 }
+

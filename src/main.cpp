@@ -4,6 +4,7 @@
 
 #include "data_getters/cpuid_data.hpp"
 #include "data_getters/msr_data.hpp"
+#include "data_getters/system_files_data.h++"
 
 #define TIME_MUL 10
 
@@ -59,6 +60,8 @@ int main(int argc, char const *argv[])
 			 << "\n"
 			 << "vendor = \""
 			 << get_cpu_vendor() << "\"\n"
+			 << "name = \""
+			 << get_cpu_name() << "\"\n"
 			 << "power = "
 			 << package_power << "\n"
 			 << "voltage = "
@@ -69,7 +72,7 @@ int main(int argc, char const *argv[])
 			 << get_cpu_temperature(fd) << "\n"
 			 << "hyper_threading = "
 			 << get_cpu_ht(fd) << "\n"
-			 << "logical_cores = " 
+			 << "logical_cores = "
 			 << get_cpu_cores().logical << "\n"
 			 << "physical_cores = "
 			 << get_cpu_cores().physical << "\n";

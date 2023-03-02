@@ -39,8 +39,9 @@ int main(int argc, char const *argv[])
 	long long result;
 	double cpu_energy_units, package_before, package_after;
 	double package_power;
-	fd = open_msr(0);
 
+	fd = open_msr(0);
+	string filepath = "/msr_data.toml";
 	while (true)
 	{
 		result = read_msr(fd, MSR_POWER_UNIT);
@@ -53,9 +54,8 @@ int main(int argc, char const *argv[])
 		package_power = (package_after - package_before) * TIME_MUL;
 
 		ofstream file;
-		string fielpath = "/msr_data.toml";
 
-		file.open(fielpath);
+		file.open(filepath);
 		file << "[cpu]"
 			 << "\n"
 			 << "vendor = \""

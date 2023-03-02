@@ -1,5 +1,6 @@
 #include <iostream>
-
+#include <string>
+#include <algorithm>
 using namespace std;
 
 void cpuID(unsigned i, unsigned regs[4])
@@ -44,8 +45,12 @@ string get_cpu_name() {
 	((unsigned *)temp)[2] = regs[2]; // ECX
 	((unsigned *)temp)[3] = regs[3]; // EDX
 	cpu_name += string(temp, 16);
+	string cpu_name_filtrated;
+	
+	copy_if(begin(cpu_name), end(cpu_name), back_inserter(cpu_name_filtrated),
+         [](const auto c) { return static_cast<unsigned char>(c) <= 0x7F  && static_cast<unsigned char>(c) > 0; });
 
-	return cpu_name;
+	return cpu_name_filtrated;
 }
 
 typedef struct cpu_cores

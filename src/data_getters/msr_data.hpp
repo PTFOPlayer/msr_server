@@ -91,7 +91,11 @@ double get_cpu_temperature(int fd)
 	result = read_msr(fd, MSR_TEMPERATURE_TARGET);
 	double t2 = (double)((result >> 16) & ((1 << 7) - 1));
 
-	return t2 - t1;
+	result = read_msr(fd, MSR_TEMPERATURE_TARGET);
+	double t3 = (double)((result >> 8) & ((1 << 7) - 1));
+	//cout << t3 << endl;
+
+	return t2 - t1 - t3;
 }
 
 bool get_cpu_ht(int fd)

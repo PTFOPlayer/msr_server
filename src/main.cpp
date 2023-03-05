@@ -55,27 +55,35 @@ int main(int argc, char const *argv[])
 
 		ofstream file;
 
+		string vendor = get_cpu_vendor();
+		string name = get_cpu_name();
+		double voltage = get_cpu_voltage(fd);
+		double usage = get_cpu_usage();
+		double temperature = get_cpu_temperature_non_msr();
+		bool ht = get_cpu_ht(fd);
+		auto cores_thread = get_cpu_cores();
+
 		file.open(filepath);
 		file << "[cpu]"
 			 << "\n"
 			 << "vendor = \""
-			 << get_cpu_vendor() << "\"\n"
+			 << vendor << "\"\n"
 			 << "name = \""
-			 << get_cpu_name() << "\"\n"
+			 << name << "\"\n"
 			 << "power = "
 			 << package_power << "\n"
 			 << "voltage = "
-			 << get_cpu_voltage(fd) << "\n"
+			 << voltage << "\n"
 			 << "usage = "
-			 << get_cpu_usage() << "\n"
+			 << usage << "\n"
 			 << "temperature = "
-			 << get_cpu_temperature_non_msr() << "\n"
+			 << temperature << "\n"
 			 << "hyper_threading = "
-			 << get_cpu_ht(fd) << "\n"
+			 << ht << "\n"
 			 << "logical_cores = "
-			 << get_cpu_cores().logical << "\n"
+			 << cores_thread.logical << "\n"
 			 << "physical_cores = "
-			 << get_cpu_cores().physical << "\n";
+			 << cores_thread.physical << "\n";
 		file.close();
 	}
 }

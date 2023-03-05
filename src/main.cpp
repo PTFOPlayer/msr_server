@@ -69,7 +69,7 @@ int main(int argc, char const *argv[])
 			 << "usage = "
 			 << get_cpu_usage() << "\n"
 			 << "temperature = "
-			 << get_cpu_temperature(fd) << "\n"
+			 << get_cpu_temperature_non_msr() << "\n"
 			 << "hyper_threading = "
 			 << get_cpu_ht(fd) << "\n"
 			 << "logical_cores = "

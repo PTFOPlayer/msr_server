@@ -4,7 +4,7 @@
 
 #include "data_getters/cpuid_data.hpp"
 #include "data_getters/msr_data.hpp"
-#include "data_getters/system_files_data.h++"
+#include "data_getters/system_files_data.hpp"
 
 #define TIME_MUL 10
 
@@ -40,28 +40,28 @@ int main(int argc, char const *argv[])
 	double cpu_energy_units, package_before, package_after;
 	double package_power;
 
-	fd = open_msr(0);
+	fd = msr_data::open_msr(0);
 	string filepath = "/msr_data.toml";
 	while (true)
 	{
-		result = read_msr(fd, MSR_POWER_UNIT);
+		result = msr_data::read_msr(fd, MSR_POWER_UNIT);
 		cpu_energy_units = pow(0.5, (double)((result >> 8) & 0x1f));
 
-		package_before = get_package_power_before(fd, cpu_energy_units);
+		package_before = msr_data::get_package_power_before(fd, cpu_energy_units);
 		msleep(1000 / TIME_MUL);
-		package_after = get_package_power_after(fd, cpu_energy_units);
+		package_after = msr_data::get_package_power_after(fd, cpu_energy_units);
 
 		package_power = (package_after - package_before) * TIME_MUL;
 
 		ofstream file;
 
-		string vendor = get_cpu_vendor();
-		string name = get_cpu_name();
-		double voltage = get_cpu_voltage(fd);
+		string vendor = cpuid_data::get_cpu_vendor();
+		string name = cpuid_data::get_cpu_name();
+		double voltage = msr_data::get_cpu_voltage(fd);
 		double usage = get_cpu_usage();
 		double temperature = get_cpu_temperature_non_msr();
-		bool ht = get_cpu_ht(fd);
-		auto cores_thread = get_cpu_cores();
+		bool ht = msr_data::get_cpu_ht(fd);
+		auto cores_thread = cpuid_data::get_cpu_cores();
 
 		file.open(filepath);
 		file << "[cpu]"
@@ -84,6 +84,7 @@ int main(int argc, char const *argv[])
 			 << cores_thread.logical << "\n"
 			 << "physical_cores = "
 			 << cores_thread.physical << "\n";
+
 		file.close();
 	}
 }

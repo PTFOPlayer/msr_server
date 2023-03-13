@@ -1,6 +1,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include "../algorithms/split.hpp"
 
 static unsigned long long lastTotalUser, lastTotalUserLow, lastTotalSys, lastTotalIdle;
 
@@ -36,29 +37,11 @@ double get_cpu_usage()
 	return percent;
 }
 
-size_t split(const std::string &txt, std::vector<std::string> &strs, char ch)
-{
-    size_t pos = txt.find( ch );
-    size_t initialPos = 0;
-    strs.clear();
-
-    while( pos != std::string::npos ) {
-        strs.push_back( txt.substr( initialPos, pos - initialPos ) );
-        initialPos = pos + 1;
-
-        pos = txt.find( ch, initialPos );
-    }
-
-    strs.push_back( txt.substr( initialPos, std::min( pos, txt.size() ) - initialPos + 1 ) );
-
-    return strs.size();
-}
-
 double get_cpu_temperature_non_msr() {
 	const char * cmd = "sensors | grep \"Package id 0:\"";
 	char buffer[128];
-    string result = "";
-    FILE* pipe = popen(cmd, "r");
+    std::string result = "";
+    std::FILE* pipe = popen(cmd, "r");
     if (!pipe) throw std::runtime_error("popen() failed!");
     try {
         while (fgets(buffer, sizeof buffer, pipe) != NULL) {
@@ -70,11 +53,11 @@ double get_cpu_temperature_non_msr() {
     }
     pclose(pipe);
 	
-	vector<string> v;
+	std::vector<std::string> v;
     split( result, v, ' ' );
 
 	v[4].erase(std::remove(v[4].begin(), v[4].end(), '+'), v[4].end());
 	v[4].pop_back();
 	v[4].pop_back();
-	return stof(v[4]);
+	return std::stof(v[4]);
 }

@@ -1,4 +1,5 @@
 /.vscode
 /msr_gen
+a.out
 /build
 .prettierrc

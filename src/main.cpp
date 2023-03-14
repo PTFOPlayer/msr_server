@@ -5,36 +5,14 @@
 #include "data_getters/cpuid_data.hpp"
 #include "data_getters/msr_data.hpp"
 #include "data_getters/system_files_data.hpp"
+#include "algorithms/msleep.hpp"
 
 #define TIME_MUL 10
 
 using namespace std;
 
-int msleep(long msec)
-{
-	struct timespec ts;
-	int res;
-
-	if (msec < 0)
-	{
-		errno = EINVAL;
-		return -1;
-	}
-
-	ts.tv_sec = msec / 1000;
-	ts.tv_nsec = (msec % 1000) * 1000000;
-
-	do
-	{
-		res = nanosleep(&ts, &ts);
-	} while (res && errno == EINTR);
-
-	return res;
-}
-
 int main(int argc, char const *argv[])
 {
-
 	int fd;
 	long long result;
 	double cpu_energy_units, package_before, package_after;
@@ -42,6 +20,8 @@ int main(int argc, char const *argv[])
 
 	fd = msr_data::open_msr(0);
 	string filepath = "/msr_data.toml";
+	ofstream file;
+	
 	while (true)
 	{
 		result = msr_data::read_msr(fd, MSR_POWER_UNIT);
@@ -53,8 +33,6 @@ int main(int argc, char const *argv[])
 
 		package_power = (package_after - package_before) * TIME_MUL;
 
-		ofstream file;
-
 		string vendor = cpuid_data::get_cpu_vendor();
 		string name = cpuid_data::get_cpu_name();
 		double voltage = msr_data::get_cpu_voltage(fd);
@@ -62,7 +40,7 @@ int main(int argc, char const *argv[])
 		double temperature = get_cpu_temperature_non_msr();
 		bool ht = msr_data::get_cpu_ht(fd);
 		auto cores_thread = cpuid_data::get_cpu_cores();
-
+		
 		file.open(filepath);
 		file << "[cpu]"
 			 << "\n"

@@ -1,9 +1,7 @@
 #include <fstream>
 #include <fcntl.h>
-#include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#include <time.h>
 
 #define MSR_PKG_ENERGY_STATUS 0x611
 #define MSR_POWER_UNIT 0x606

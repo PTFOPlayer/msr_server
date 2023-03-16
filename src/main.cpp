@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <math.h>
+#include <thread>
 
 #include "data_getters/cpuid_data.hpp"
 #include "data_getters/msr_data.hpp"
@@ -10,6 +11,11 @@
 #define TIME_MUL 10
 
 using namespace std;
+
+void start_node() {
+	cout << "server starting..." << endl;
+	system("node ./src/msr_server.js &");
+}
 
 int main(int argc, char const *argv[])
 {
@@ -21,6 +27,15 @@ int main(int argc, char const *argv[])
 	fd = msr_data::open_msr(0);
 	string filepath = "/msr_data.toml";
 	ofstream file;
+
+	if (argc >= 2) {
+		if (strcmp(argv[1], "-w") == 0) {
+			thread t(start_node);
+			t.join();
+		}
+	}
+
+	cout << "starting data parsers..." << endl;
 	
 	while (true)
 	{

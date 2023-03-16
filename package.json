@@ -1,0 +1,15 @@
+{
+  "name": "msr_server",
+  "version": "1.0.0",
+  "description": "msr_server is a program that collects data from CPUID, model specyfic register and some system files, then parses that data and writes it to single toml file.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

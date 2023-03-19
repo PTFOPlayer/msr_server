@@ -1,4 +1,5 @@
 #!/bin/bash
+cdir=`pwd`
 mkdir build 
 cd build
 cmake .. 
@@ -32,8 +33,6 @@ else
     exit 1
 fi
 
-sudo npm install ts-node @types/express -g
-
 if !(ls /var | grep msr_server)
 then
     sudo mkdir /var/msr_server
@@ -44,7 +43,12 @@ service1=$(find . | grep msr_server.service)
 service2=$(find . | grep msr_rest_server.service)
 if (sudo cp $service1 /etc/systemd/system/) && (sudo cp $service2 /etc/systemd/system/) && (sudo cp $binary /usr/bin/) && (sudo cp $node_server /var/msr_server/)
 then
-    echo "succes, build ended"
+    if (sudo cp ./package.json /var/msr_server) && (cd /var/msr_server) && (sudo npm i)
+    then 
+        echo "succes, build ended"
+    else
+        echo "error building"
+    fi
 else 
     echo "error building"
 fi

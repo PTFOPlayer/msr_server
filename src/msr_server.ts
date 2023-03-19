@@ -1,10 +1,10 @@
-import express from "express";
-import fs from "fs";
+//import express from "express";
 import { exec } from 'child_process';
+const express = require("express")
 
 const app = express();
 
-app.get('/', async (req: any, res: { send: (arg0: any) => void; }) => {
+app.get('/', async (req:any, res: { send: (arg0: any) => void; }) => {
     await exec('sudo msr_gen -o', (error, stdout, stderr) => {
         if( stdout !== null) return res.send(stdout);
         else if ( stderr !== null) res.send(stderr)

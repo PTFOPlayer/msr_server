@@ -32,20 +32,19 @@ else
     exit 1
 fi
 
-sudo npm install ts-node -g
-sudo npm install 
+sudo npm install ts-node @types/express -g
 
-sudo mkdir /var/msr_server
-sudo cp ./src/msr_server.ts /var/msr_server/
-sudo cp ./build/msr_gen /usr/bin/
-if (sudo cp ./msr_server.service /etc/systemd/system/) && (sudo cp ./msr_web_server.service /etc/systemd/system/)
+if !(ls /var | grep msr_server)
+then
+    sudo mkdir /var/msr_server
+fi
+node_server=$(find . | grep msr_server.ts)
+binary=$(find . -depth -maxdepth 2 | grep /msr_gen)
+service1=$(find . | grep msr_server.service)
+service2=$(find . | grep msr_rest_server.service)
+if (sudo cp $service1 /etc/systemd/system/) && (sudo cp $service2 /etc/systemd/system/) && (sudo cp $binary /usr/bin/) && (sudo cp $node_server /var/msr_server/)
 then
     echo "succes, build ended"
 else 
-    if (sudo cp ../msr_server.service /etc/systemd/system/) && (sudo cp ../msr_web_server.service /etc/systemd/system/)
-    then 
-        echo "succes, build ended"
-    else 
-        echo "error building"
-    fi
+    echo "error building"
 fi

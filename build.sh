@@ -43,7 +43,7 @@ service1=$(find . | grep msr_server.service)
 service2=$(find . | grep msr_rest_server.service)
 if (sudo cp $service1 /etc/systemd/system/) && (sudo cp $service2 /etc/systemd/system/) && (sudo cp $binary /usr/bin/) && (sudo cp $node_server /var/msr_server/)
 then
-    if (sudo cp ./package.json /var/msr_server) && (cd /var/msr_server) && (sudo npm i)
+    if (sudo cp ./package.json /var/msr_server) && (sudo npm i --prefix /var/msr_server)
     then 
         echo "succes, build ended"
     else

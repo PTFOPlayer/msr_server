@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 const express = require("express")
 
 const app = express();
+const port = 3230;
 
 app.get('/', async (req:any, res: { send: (arg0: any) => void; }) => {
     await exec('sudo msr_gen -o', (error, stdout, stderr) => {
@@ -12,4 +13,4 @@ app.get('/', async (req:any, res: { send: (arg0: any) => void; }) => {
     });
 });
 
-app.listen(3230, () => console.log('listening on port 3230'));
+app.listen(port, () => console.log(`listening on port ${port}`));

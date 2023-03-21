@@ -82,17 +82,17 @@ int main(int argc, char const *argv[])
 			auto cores_thread = cpuid_data::get_cpu_cores();
 			// sleep depends on that
 			auto package_power = msr_data::get_cpu_power(fd, TIME_MUL);
-			cout << "{\n\t\"cpu\":{\n"
-				 << "\t\t\"vendor\":\"" << vendor << "\"\n"
-				 << "\t\t\"name\":\"" << name << "\"\n"
-				 << "\t\t\"power\":" << package_power << "\n"
-				 << "\t\t\"voltage\":" << voltage << "\n"
-				 << "\t\t\"usage\":" << usage << "\n"
-				 << "\t\t\"temperature\":" << temperature << "\n"
-				 << "\t\t\"hyper_threading\":" << ht << "\n"
-				 << "\t\t\"logical_cores\":" << cores_thread.logical << "\n"
-				 << "\t\t\"physical_cores\":" << cores_thread.physical << "\n"
-				 << "\t}\n}";
+			cout << "{\"cpu\":{"
+				 << "\"vendor\":\"" << vendor << "\","
+				 << "\"name\":\"" << name << "\","
+				 << "\"power\":" << package_power << ","
+				 << "\"voltage\":" << voltage << ","
+				 << "\"usage\":" << usage << ","
+				 << "\"temperature\":" << temperature << ","
+				 << "\"hyper_threading\":" << ht << ","
+				 << "\"logical_cores\":" << cores_thread.logical << ","
+				 << "\"physical_cores\":" << cores_thread.physical << ""
+				 << "}}";
 		}
 	}
 }

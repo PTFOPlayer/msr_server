@@ -17,10 +17,32 @@ app.get('/', (req:any, res: { send: (arg0: any) => void; }) => {
     });
 });
 
-app.get('/json', (req:any, res: { send: (arg0: any) => void; }) => {
+type msr_obj = {
+    cpu: {
+        vendor: string,
+        name: string,
+        power: number,
+        voltage: number,
+        usage: number,
+        temperature: number,
+        hyper_threading: number,
+        logical_cores: number,
+        physical_cores: number,
+    }
+}
+
+app.get('/json/*', (req, res) => {
     exec('sudo msr_gen -j', (error, stdout, stderr) => {
-        if (stdout !== null)
-            return res.send(stdout);
+        let obj: msr_obj = JSON.parse(stdout)
+        if (stdout !== null) {
+            if (req.url === "/json" || req.url === "/json/")
+                res.write(stdout);
+            if (req.url.includes('/usage')) res.write(obj.cpu.usage.toString()+" ");
+            if (req.url.includes('/power')) res.write(obj.cpu.power.toString()+" ");
+            if (req.url.includes('/temperature')) res.write(obj.cpu.temperature.toString()+" ");
+            if (req.url.includes('/voltage')) res.write(obj.cpu.voltage.toString()+" ");
+            return res.send()
+        }
         else if (stderr !== null)
             res.send(stderr);
         else
@@ -30,9 +52,8 @@ app.get('/json', (req:any, res: { send: (arg0: any) => void; }) => {
 
 const execute_middleware =(req: { body: string; }): string => {
     let json = JSON.parse(JSON.stringify(req.body))
-    return "currently not implemented"
-    if (json.key !== null && json.key === "lorem") {
-        if (json.command !== null)
+    if (json.key !== null && process.env.MSR_KEY !== null) {
+        if (json.command !== null && process.env.MSR_KEY === json.key)
             return json.command
         else {
             return "echo \"no key supplied in attached json\""

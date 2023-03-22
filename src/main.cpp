@@ -5,6 +5,7 @@
 #include "data_getters/cpuid_data.hpp"
 #include "data_getters/msr_data.hpp"
 #include "data_getters/system_files_data.hpp"
+#include "data_getters/memory_data.hpp"
 
 #define TIME_MUL 10
 
@@ -15,7 +16,7 @@ int main(int argc, char const *argv[])
 	int fd = msr_data::open_msr(0);
 	string filepath = "/msr_data.toml";
 	ofstream file;
-
+	//cout << get_mem_total();
 	if (argc >= 2)
 	{
 		if (strcmp(argv[1], "-f") == 0)
@@ -82,6 +83,11 @@ int main(int argc, char const *argv[])
 			auto cores_thread = cpuid_data::get_cpu_cores();
 			// sleep depends on that
 			auto package_power = msr_data::get_cpu_power(fd, TIME_MUL);
+
+			auto memory_total = get_mem_total();
+			auto memory_available = get_mem_available();
+			long memory_used = stoi(memory_total) - stoi(memory_available); 
+
 			cout << "{\"cpu\":{"
 				 << "\"vendor\":\"" << vendor << "\","
 				 << "\"name\":\"" << name << "\","
@@ -91,8 +97,12 @@ int main(int argc, char const *argv[])
 				 << "\"temperature\":" << temperature << ","
 				 << "\"hyper_threading\":" << ht << ","
 				 << "\"logical_cores\":" << cores_thread.logical << ","
-				 << "\"physical_cores\":" << cores_thread.physical << ""
-				 << "}}";
+				 << "\"physical_cores\":" << cores_thread.physical << "},"
+				 << "\"memory\":{"
+				 << "\"total\":" << memory_total << ","
+				 << "\"available\":" << memory_available << ","
+				 << "\"used\":" << memory_used << "}"
+				 << "}";
 		}
 	}
 }

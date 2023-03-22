@@ -31,7 +31,11 @@ int main(int argc, char const *argv[])
 				bool ht = msr_data::get_cpu_ht(fd);
 				auto cores_thread = cpuid_data::get_cpu_cores();
 				// sleep depends on that
-				auto package_power = msr_data::get_cpu_power(fd, TIME_MUL);
+				double package_power = msr_data::get_cpu_power(fd, TIME_MUL);
+
+				string memory_total = get_mem_total();
+				string memory_available = get_mem_available();
+				long memory_used = stoi(memory_total) - stoi(memory_available); 
 
 				file.open(filepath);
 				file << "[cpu]"
@@ -44,7 +48,12 @@ int main(int argc, char const *argv[])
 					 << "temperature = " << temperature << "\n"
 					 << "hyper_threading = " << ht << "\n"
 					 << "logical_cores = " << cores_thread.logical << "\n"
-					 << "physical_cores = " << cores_thread.physical << "\n";
+					 << "physical_cores = " << cores_thread.physical << "\n"
+					 << "[memory]" 
+					 << "\n"
+					 << "total = " << memory_total << "\n"
+					 << "available = " << memory_available << "\n"
+					 << "used = " << memory_used << "\n";
 
 				file.close();
 			}
@@ -60,6 +69,11 @@ int main(int argc, char const *argv[])
 			auto cores_thread = cpuid_data::get_cpu_cores();
 			// sleep depends on that
 			auto package_power = msr_data::get_cpu_power(fd, TIME_MUL);
+
+			string memory_total = get_mem_total();
+			string memory_available = get_mem_available();
+			long memory_used = stoi(memory_total) - stoi(memory_available);
+
 			cout << "[cpu]"
 				 << "\n"
 				 << "vendor = \"" << vendor << "\"\n"
@@ -70,7 +84,12 @@ int main(int argc, char const *argv[])
 				 << "temperature = " << temperature << "\n"
 				 << "hyper_threading = " << ht << "\n"
 				 << "logical_cores = " << cores_thread.logical << "\n"
-				 << "physical_cores = " << cores_thread.physical << "\n";
+				 << "physical_cores = " << cores_thread.physical << "\n"
+				 << "[memory]" 
+				 << "\n"
+				 << "total = " << memory_total << "\n"
+				 << "available = " << memory_available << "\n"
+				 << "used = " << memory_used << "\n";
 		}
 		if (strcmp(argv[1], "-j") == 0)
 		{

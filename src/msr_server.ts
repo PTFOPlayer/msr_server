@@ -23,6 +23,11 @@ interface msr_obj {
         logical_cores: number,
         physical_cores: number,
     }
+    memory: {
+        total: number
+        available: number
+        used: number
+    }
 }
 
 interface exec_json {
@@ -47,10 +52,17 @@ app.get('/json/*', (req: {url: string}, res: Res) => {
         if (stdout !== null) {
             if (req.url === "/json" || req.url === "/json/") res.write(stdout);
             else if (req.url.match('/json/cpu\*') ){
-                if (req.url.includes('/usage')) res.write(obj.cpu.usage.toString()+" ");
+                if (req.url.includes('/vendor')) res.write(obj.cpu.vendor.toString()+" ");
+                if (req.url.includes('/name')) res.write(obj.cpu.name.toString()+" ");
                 if (req.url.includes('/power')) res.write(obj.cpu.power.toString()+" ");
-                if (req.url.includes('/temperature')) res.write(obj.cpu.temperature.toString()+" ");
                 if (req.url.includes('/voltage')) res.write(obj.cpu.voltage.toString()+" ");
+                if (req.url.includes('/usage')) res.write(obj.cpu.usage.toString()+" ");
+                if (req.url.includes('/temperature')) res.write(obj.cpu.temperature.toString()+" ");
+            }
+            else if (req.url.match('/json/memory\*')) {
+                if (req.url.includes('/total')) res.write(obj.memory.total.toString()+" ");
+                if (req.url.includes('/available')) res.write(obj.memory.available.toString()+" ");
+                if (req.url.includes('/used')) res.write(obj.memory.used.toString()+" ");
             }
             return res.send()
         }

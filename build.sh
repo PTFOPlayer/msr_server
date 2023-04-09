@@ -1,11 +1,4 @@
 #!/bin/bash
-cdir=`pwd`
-mkdir build 
-cd build
-cmake .. 
-make
-cd ..
-
 if (which npm) && (which npx)
 then
     echo "npm, npx: OK"
@@ -32,6 +25,15 @@ else
     echo "g++, cmake or make not found"
     exit 1
 fi
+
+cargo build --release 
+cdir=`pwd`
+mkdir build
+cd build
+cmake .. 
+make
+cd ..
+
 
 if !(ls /var | grep msr_server)
 then

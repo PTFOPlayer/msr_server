@@ -5,3 +5,7 @@ a.out
 /build
 .prettierrc
 package-lock.json
+
+# Added by cargo
+
+/target

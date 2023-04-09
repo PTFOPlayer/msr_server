@@ -1,11 +1,10 @@
 use std::ffi::{c_char, CString};
 
 use lazy_static::lazy_static;
-use raw_cpuid::{CpuId};
+use raw_cpuid::{CpuId}; 
 
-use super::system_data::get_cpu_threads_rs;
 lazy_static!{
-    static ref CPUID: CpuId = CpuId::new();
+    pub static ref CPUID: CpuId = CpuId::new();
 }
 //static cpuid: CpuId = CpuId::new();
 
@@ -38,17 +37,3 @@ pub extern "C" fn get_cpu_name_rs() -> *const c_char {
     }
 }
 
-#[no_mangle]
-pub extern "C" fn get_cpu_cores_rs() -> i32 {
-    let t = get_cpu_threads_rs();
-    if {
-        let this = CPUID.get_feature_info();
-        match this {
-            Some(val) => val.has_htt(),
-            None => false,
-        }
-    } {
-        return t/2;
-    } 
-    return t;
-}

@@ -20,37 +20,23 @@ int main(int argc, char const *argv[])
 				char *vendor = get_cpu_vendor_rs();
 				char *name = get_cpu_name_rs();
 				double voltage = get_cpu_voltage(fd);
-				float temperature = get_cpu_temp_rs();
-				int threads = get_cpu_threads_rs();
-				int cores = get_cpu_cores_rs();
+
 				// sleep depends on that
 				double package_power = get_cpu_power(fd, TIME_MUL);
-				struct core_stat cs = get_cpu_utils_rs(TIME_MUL);
+				struct core_stat cs = get_sys_utils_rs(TIME_MUL);
 
 				long frequency = cs.freq;
 				double usage = cs.util;
-
-				unsigned long long memory_total = get_mem_total();
-				unsigned long long memory_free = get_mem_free();
-				unsigned long long memory_used = get_mem_used();
+				unsigned long long memory_total = cs.mem_total;
+				unsigned long long memory_free = cs.mem_free;
+				unsigned long long memory_used = cs.mem_used;
+				float temperature = cs.temperature;
+				int threads = cs.threads;
+				int cores = cs.cores;
 
 				file = fopen(filepath, "w");
 
-				fprintf(file, "[cpu]\n");
-				fprintf(file, "vendor = \"%s\" \n", vendor);
-				fprintf(file, "name = \"%s\" \n", name);
-				fprintf(file, "power = %lf\n", package_power);
-				fprintf(file, "voltage = %lf\n", voltage);
-				fprintf(file, "temperature = %f\n", temperature);
-				fprintf(file, "frequency = %ld\n", frequency);
-				fprintf(file, "usage = %lf\n", usage);
-				fprintf(file, "logical_cores = %d\n", threads);
-				fprintf(file, "physical_cores = %d\n", cores);
-				fprintf(file, "[memory]\n");
-				fprintf(file, "total = %lu\n", memory_total / 1024 / 1024);
-				fprintf(file, "available = %lu\n", memory_free / 1024 / 1024);
-				fprintf(file, "used = %lu\n", memory_used / 1024 / 1024);
-
+				fprintf(file, "[cpu]\nvendor = \"%s\"\nname = \"%s\"\npower = %lf\nvoltage = %lf\ntemperature = %f\nfrequency = %ld\nusage = %lf\nlogical_cores = %d\nphysical_cores = %d\n[memory]\ntotal = %lu\navailable = %lu\nused = %lu\n", vendor, name, package_power, voltage, temperature, frequency, usage, threads, cores, memory_total / 1024 / 1024, memory_free / 1024 / 1024, memory_used / 1024 / 1024);
 				fclose(file);
 			}
 		}
@@ -59,19 +45,19 @@ int main(int argc, char const *argv[])
 			char *vendor = get_cpu_vendor_rs();
 			char *name = get_cpu_name_rs();
 			double voltage = get_cpu_voltage(fd);
-			float temperature = get_cpu_temp_rs();
-			int threads = get_cpu_threads_rs();
-			int cores = get_cpu_cores_rs();
+
 			// sleep depends on that
 			double package_power = get_cpu_power(fd, TIME_MUL);
-			struct core_stat cs = get_cpu_utils_rs(TIME_MUL);
+			struct core_stat cs = get_sys_utils_rs(TIME_MUL);
 
 			long frequency = cs.freq;
 			double usage = cs.util;
-
-			unsigned long long memory_total = get_mem_total();
-			unsigned long long memory_free = get_mem_free();
-			unsigned long long memory_used = get_mem_used();
+			unsigned long long memory_total = cs.mem_total;
+			unsigned long long memory_free = cs.mem_free;
+			unsigned long long memory_used = cs.mem_used;
+			float temperature = cs.temperature;
+			int threads = cs.threads;
+			int cores = cs.cores;
 
 			printf("[cpu]\n");
 			printf("vendor = \"%s\" \n", vendor);
@@ -94,19 +80,19 @@ int main(int argc, char const *argv[])
 			char *vendor = get_cpu_vendor_rs();
 			char *name = get_cpu_name_rs();
 			double voltage = get_cpu_voltage(fd);
-			float temperature = get_cpu_temp_rs();
-			int threads = get_cpu_threads_rs();
-			int cores = get_cpu_cores_rs();
+
 			// sleep depends on that
 			double package_power = get_cpu_power(fd, TIME_MUL);
-			struct core_stat cs = get_cpu_utils_rs(TIME_MUL);
+			struct core_stat cs = get_sys_utils_rs(TIME_MUL);
 
 			long frequency = cs.freq;
 			double usage = cs.util;
-
-			unsigned long long memory_total = get_mem_total();
-			unsigned long long memory_free = get_mem_free();
-			unsigned long long memory_used = get_mem_used();
+			unsigned long long memory_total = cs.mem_total;
+			unsigned long long memory_free = cs.mem_free;
+			unsigned long long memory_used = cs.mem_used;
+			float temperature = cs.temperature;
+			int threads = cs.threads;
+			int cores = cs.cores;
 
 			printf("{\n\t\"cpu\":{\n");
 			printf("\t\t\"vendor\" : \"%s,\" \n", vendor);
@@ -126,7 +112,9 @@ int main(int argc, char const *argv[])
 			printf("\t}\n");
 			printf("}\n");
 		}
-	} else {
+	}
+	else
+	{
 		printf("error: no provided arguments\n -f: writing to file `/msr_data.toml`\n -o: output to terminal in toml format\n -j: output to terminal in json format");
 	}
 }

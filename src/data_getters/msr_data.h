@@ -1,9 +1,9 @@
-#include <fstream>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 
-#include "../algorithms/msleep.hpp"
+#include "../algorithms/msleep.h"
 
 #define MSR_PKG_ENERGY_STATUS 0x611
 #define MSR_POWER_UNIT 0x606
@@ -12,13 +12,11 @@
 #define MSR_TEMPERATURE_TARGET 0x1a2
 #define MSR_MISC_ENABLE 0x1a0
 
-class msr_data
-{
-public:
+
 	static int open_msr(int core)
 	{
 
-		char msr_filename[BUFSIZ];
+		char msr_filename[8192];
 		int fd;
 
 		sprintf(msr_filename, "/dev/cpu/%d/msr", core);
@@ -50,7 +48,7 @@ public:
 	static long long read_msr(int fd, int which)
 	{
 
-		uint64_t data;
+		long long data;
 
 		if (pread(fd, &data, sizeof data, which) != sizeof data)
 		{
@@ -100,15 +98,14 @@ public:
 		double cpu_energy_units, package_before, package_after;
 		double package_power;
 		
-		result = msr_data::read_msr(fd, MSR_POWER_UNIT);
+		result = read_msr(fd, MSR_POWER_UNIT);
 		cpu_energy_units = pow(0.5, (double)((result >> 8) & 0x1f));
 		
-		package_before = msr_data::get_package_power(fd, cpu_energy_units);
+		package_before = get_package_power(fd, cpu_energy_units);
 		
 		msleep(1000 / time_mul);
 		
-		package_after = msr_data::get_package_power(fd, cpu_energy_units);
+		package_after = get_package_power(fd, cpu_energy_units);
 		
 		return (package_after - package_before) * time_mul;
 	}
-};

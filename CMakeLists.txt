@@ -13,4 +13,5 @@ add_executable(msr_gen ./src/main.c)
 target_link_libraries(
     msr_gen
     ${CMAKE_SOURCE_DIR}/target/release/libmsr_rs.a
+#	 ../target/release/libmsr_rs.a
 )

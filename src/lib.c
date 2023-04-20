@@ -1,3 +1,4 @@
+
 struct core_stat {
     unsigned long long freq;
     double util;
@@ -13,3 +14,4 @@ char *  get_cpu_vendor_rs();
 char *  get_cpu_name_rs();
  
 struct core_stat get_sys_utils_rs(int time_mul);
+

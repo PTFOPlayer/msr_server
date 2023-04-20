@@ -42,14 +42,12 @@ if (sudo cp $service1 /etc/systemd/system/) && (sudo cp $service2 /etc/systemd/s
 then
     if (sudo cp ./package.json /var/msr_server) && (sudo npm i --prefix /var/msr_server)
     then 
-        sudo -s
-        if (LD_LIBRARY_PATH=/usr/lib/libmsr_rs.so:$LD_LIBRARY_PATH && exit)
+        if (sudo LD_LIBRARY_PATH=/usr/lib/libmsr_rs.so:$LD_LIBRARY_PATH bash -c 'echo $LD_LIBRARY_PATH')
         then
             echo "succes, build ended"
         else
             echo "error building"
         fi
-        echo "succes, build ended"
     else
         echo "error building"
     fi

@@ -1,6 +1,7 @@
 /.vscode
 /node_modules
-/msr_gen
+msr_gen
+libmsr_rs.so
 a.out
 /build
 .prettierrc

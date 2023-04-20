@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "data_getters/msr_data.h"
 #include "lib.c"
-
+#include <stdint.h>
 #define TIME_MUL 5
 
 
@@ -36,7 +36,7 @@ int main(int argc, char const *argv[])
 
 				file = fopen(filepath, "w");
 
-				fprintf(file, "[cpu]\nvendor = \"%s\"\nname = \"%s\"\npower = %lf\nvoltage = %lf\ntemperature = %f\nfrequency = %ld\nusage = %lf\nlogical_cores = %d\nphysical_cores = %d\n[memory]\ntotal = %lu\navailable = %lu\nused = %lu\n", vendor, name, package_power, voltage, temperature, frequency, usage, threads, cores, memory_total / 1024 / 1024, memory_free / 1024 / 1024, memory_used / 1024 / 1024);
+				fprintf(file, "[cpu]\nvendor = \"%s\"\nname = \"%s\"\npower = %lf\nvoltage = %lf\ntemperature = %f\nfrequency = %ld\nusage = %lf\nlogical_cores = %d\nphysical_cores = %d\n[memory]\ntotal = %llu\navailable = %llu\nused = %llu\n", vendor, name, package_power, voltage, temperature, frequency, usage, threads, cores, memory_total / 1024 / 1024, memory_free / 1024 / 1024, memory_used / 1024 / 1024);
 				fclose(file);
 			}
 		}
@@ -56,7 +56,7 @@ int main(int argc, char const *argv[])
 			int threads = cs.threads;
 			int cores = cs.cores;
 
-			printf("[cpu]\nvendor = \"%s\"\nname = \"%s\"\npower = %lf\nvoltage = %lf\ntemperature = %f\nfrequency = %ld\nusage = %lf\nlogical_cores = %d\nphysical_cores = %d\n[memory]\ntotal = %lu\navailable = %lu\nused = %lu\n", vendor, name, package_power, voltage, temperature, frequency, usage, threads, cores, memory_total / 1024 / 1024, memory_free / 1024 / 1024, memory_used / 1024 / 1024);
+			printf("[cpu]\nvendor = \"%s\"\nname = \"%s\"\npower = %lf\nvoltage = %lf\ntemperature = %f\nfrequency = %ld\nusage = %lf\nlogical_cores = %d\nphysical_cores = %d\n[memory]\ntotal = %llu\navailable = %llu\nused = %llu\n", vendor, name, package_power, voltage, temperature, frequency, usage, threads, cores, memory_total / 1024 / 1024, memory_free / 1024 / 1024, memory_used / 1024 / 1024);
 		}
 		if (strcmp(argv[1], "-j") == 0)
 		{
@@ -74,7 +74,7 @@ int main(int argc, char const *argv[])
 			int threads = cs.threads;
 			int cores = cs.cores;
 
-			printf("{\n\t\"cpu\":{\n\t\t\"vendor\" : \"%s,\"\n\t\t\"name\" : \"%s,\"\n\t\t\"power\" : %lf,\n\t\t\"voltage\" : %lf,\n\t\t\"temperature\" : %f,\n\t\t\"frequency\" : %ld,\n\t\t\"usage\" : %lf,\n\t\t\"logical_cores\" : %d,\n\t\t\"physical_cores\" : %d\n\t},\n\t\"memory\":{\n\t\t\"total\" : %lu,\n\t\t\"available\" : %lu,\n\t\t\"used\" : %lu\n\t}\n}\n", vendor, name, package_power, voltage, temperature, frequency, usage, threads, cores,  memory_total / 1024 / 1024, memory_free / 1024 / 1024, memory_used / 1024 / 1024);
+			printf("{\n\t\"cpu\":{\n\t\t\"vendor\" : \"%s,\"\n\t\t\"name\" : \"%s,\"\n\t\t\"power\" : %lf,\n\t\t\"voltage\" : %lf,\n\t\t\"temperature\" : %f,\n\t\t\"frequency\" : %ld,\n\t\t\"usage\" : %lf,\n\t\t\"logical_cores\" : %d,\n\t\t\"physical_cores\" : %d\n\t},\n\t\"memory\":{\n\t\t\"total\" : %llu,\n\t\t\"available\" : %llu,\n\t\t\"used\" : %llu\n\t}\n}\n", vendor, name, package_power, voltage, temperature, frequency, usage, threads, cores,  memory_total / 1024 / 1024, memory_free / 1024 / 1024, memory_used / 1024 / 1024);
 		}
 	} else printf("error: no provided arguments\n -f: writing to file `/msr_data.toml`\n -o: output to terminal in toml format\n -j: output to terminal in json format");
 

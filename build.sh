@@ -28,12 +28,6 @@ fi
 
 cargo build --release 
 cdir=`pwd`
-mkdir build
-cd build
-cmake .. 
-make
-cd ..
-
 
 if !(ls /var | grep msr_server)
 then
@@ -41,12 +35,20 @@ then
 fi
 node_server=$(find . | grep msr_server.ts)
 binary=$(find . -depth -maxdepth 2 | grep /msr_gen)
+lib=./target/release/libmsr_rs.so
 service1=$(find . | grep msr_server.service)
 service2=$(find . | grep msr_rest_server.service)
-if (sudo cp $service1 /etc/systemd/system/) && (sudo cp $service2 /etc/systemd/system/) && (sudo cp $binary /usr/bin/) && (sudo cp $node_server /var/msr_server/)
+if (sudo cp $service1 /etc/systemd/system/) && (sudo cp $service2 /etc/systemd/system/) && (sudo cp $binary /usr/bin/) && (sudo cp $node_server /var/msr_server/) && (sudo cp $lib /usr/lib/) && (gcc -o msr_gen ./src/main.c -I . -l msr_rs -L /usr/lib/ -lm)
 then
     if (sudo cp ./package.json /var/msr_server) && (sudo npm i --prefix /var/msr_server)
     then 
+        sudo -s
+        if (LD_LIBRARY_PATH=/usr/lib/libmsr_rs.so:$LD_LIBRARY_PATH && exit)
+        then
+            echo "succes, build ended"
+        else
+            echo "error building"
+        fi
         echo "succes, build ended"
     else
         echo "error building"
@@ -54,3 +56,7 @@ then
 else 
     echo "error building"
 fi
+
+#build gcc -o main ./src/main.c -I . -l msr_rs -L /usr/lib/ -lm
+
+

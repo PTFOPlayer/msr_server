@@ -34,15 +34,15 @@ then
     sudo mkdir /var/msr_server
 fi
 node_server=$(find . | grep msr_server.ts)
-binary=$(find . -depth -maxdepth 2 | grep /msr_gen)
 lib=./target/release/libmsr_rs.so
 service1=$(find . | grep msr_server.service)
 service2=$(find . | grep msr_rest_server.service)
-if (sudo cp $service1 /etc/systemd/system/) && (sudo cp $service2 /etc/systemd/system/) && (sudo cp $binary /usr/bin/) && (sudo cp $node_server /var/msr_server/) && (sudo cp $lib /usr/lib/) && (gcc -o msr_gen ./src/main.c -I . -l msr_rs -L /usr/lib/ -lm)
+if (sudo cp $service1 /etc/systemd/system/) && (sudo cp $service2 /etc/systemd/system/) && (sudo cp $node_server /var/msr_server/) && (sudo cp $lib /usr/lib/libmsr_rs.so)
 then
-    if (sudo cp ./package.json /var/msr_server) && (sudo npm i --prefix /var/msr_server)
+    if (sudo cp ./package.json /var/msr_server) && (sudo npm i --prefix /var/msr_server) && (gcc -o msr_gen ./src/main.c -I . -l msr_rs -L /usr/lib/ -lm)
     then 
-        if (sudo LD_LIBRARY_PATH=/usr/lib/libmsr_rs.so:$LD_LIBRARY_PATH bash -c 'echo $LD_LIBRARY_PATH')
+        binary=$(find . -depth -maxdepth 2 | grep /msr_gen)
+        if (sudo LD_LIBRARY_PATH=/usr/lib/libmsr_rs.so:$LD_LIBRARY_PATH bash -c 'echo $LD_LIBRARY_PATH') && (sudo cp $binary /usr/bin/msr_gen)
         then
             echo "succes, build ended"
         else

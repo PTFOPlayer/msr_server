@@ -7,8 +7,8 @@ edition = "2021"
 
 [lib]
 name = "msr_rs"
-crate-type = ["staticlib"]
-#crate-type = ["cdylib"]
+#crate-type = ["staticlib"]
+crate-type = ["cdylib"]
 
 [dependencies]
 raw-cpuid = "10.7.0"

@@ -12,100 +12,99 @@
 #define MSR_TEMPERATURE_TARGET 0x1a2
 #define MSR_MISC_ENABLE 0x1a0
 
+static int open_msr(int core)
+{
+	char msr_filename[8192];
+	int fd;
 
-	static int open_msr(int core)
+	sprintf(msr_filename, "/dev/cpu/%d/msr", core);
+	fd = open(msr_filename, O_RDONLY);
+	if (fd < 0)
 	{
-
-		char msr_filename[8192];
-		int fd;
-
-		sprintf(msr_filename, "/dev/cpu/%d/msr", core);
-		fd = open(msr_filename, O_RDONLY);
-		if (fd < 0)
+		if (errno == ENXIO)
 		{
-			if (errno == ENXIO)
-			{
-				fprintf(stderr, "rdmsr: No CPU %d\n", core);
-				exit(2);
-			}
-			else if (errno == EIO)
-			{
-				fprintf(stderr, "rdmsr: CPU %d doesn't support MSRs\n",
-						core);
-				exit(3);
-			}
-			else
-			{
-				perror("rdmsr:open");
-				fprintf(stderr, "Trying to open %s\n", msr_filename);
-				exit(127);
-			}
+			fprintf(stderr, "rdmsr: No CPU %d\n", core);
+			exit(2);
 		}
-
-		return fd;
-	}
-
-	static long long read_msr(int fd, int which)
-	{
-
-		long long data;
-
-		if (pread(fd, &data, sizeof data, which) != sizeof data)
+		else if (errno == EIO)
 		{
-			perror("rdmsr:pread");
+			fprintf(stderr, "rdmsr: CPU %d doesn't support MSRs\n",
+					core);
+			exit(3);
+		}
+		else
+		{
+			perror("rdmsr:open");
+			fprintf(stderr, "Trying to open %s\n", msr_filename);
 			exit(127);
 		}
-
-		return (long long)data;
 	}
 
-	static double get_cpu_voltage(int fd)
+	return fd;
+}
+
+static long long read_msr(int fd, int which)
+{
+
+	long long data;
+
+	if (pread(fd, &data, sizeof data, which) != sizeof data)
 	{
-		long long result = read_msr(fd, MSR_VOLTAGE);
-		double voltage = (double)(result >> 32);
-		return voltage / 8192;
+		perror("rdmsr:pread");
+		exit(127);
 	}
 
-	static double get_package_power(int fd, double cpu_energy_units)
-	{
-		long long result = read_msr(fd, MSR_PKG_ENERGY_STATUS);
-		double package = (double)result * cpu_energy_units;
-		return package;
-	}
+	return (long long)data;
+}
 
-	static double get_cpu_temperature(int fd)
-	{
-		long long result;
+static double get_cpu_voltage(int fd)
+{
+	long long result = read_msr(fd, MSR_VOLTAGE);
+	double voltage = (double)(result >> 32);
+	return voltage / 8192;
+}
 
-		result = read_msr(fd, MSR_TEMPERATURE_STATUS);
-		double t1 = (double)((result >> 16) & ((1 << 6) - 1));
+static double get_package_power(int fd, double cpu_energy_units)
+{
+	long long result = read_msr(fd, MSR_PKG_ENERGY_STATUS);
+	double package = (double)result * cpu_energy_units;
+	return package;
+}
 
-		result = read_msr(fd, MSR_TEMPERATURE_TARGET);
-		double t2 = (double)((result >> 16) & ((1 << 7) - 1));
+static double get_cpu_temperature(int fd)
+{
+	long long result;
 
-		return t2 - t1;
-	}
+	result = read_msr(fd, MSR_TEMPERATURE_STATUS);
+	double t1 = (double)((result >> 16) & ((1 << 6) - 1));
 
-	static bool get_cpu_ht(int fd)
-	{
-		long long result = read_msr(fd, MSR_MISC_ENABLE);
-		bool ht = (bool)(result & 24);
-		return ht;
-	}
+	result = read_msr(fd, MSR_TEMPERATURE_TARGET);
+	double t2 = (double)((result >> 16) & ((1 << 7) - 1));
 
-	static double get_cpu_power(int fd, int time_mul) {
-		long long result;
-		double cpu_energy_units, package_before, package_after;
-		double package_power;
-		
-		result = read_msr(fd, MSR_POWER_UNIT);
-		cpu_energy_units = pow(0.5, (double)((result >> 8) & 0x1f));
-		
-		package_before = get_package_power(fd, cpu_energy_units);
-		
-		msleep(1000 / time_mul);
-		
-		package_after = get_package_power(fd, cpu_energy_units);
-		
-		return (package_after - package_before) * time_mul;
-	}
+	return t2 - t1;
+}
+
+static bool get_cpu_ht(int fd)
+{
+	long long result = read_msr(fd, MSR_MISC_ENABLE);
+	bool ht = (bool)(result & 24);
+	return ht;
+}
+
+static double get_cpu_power(int fd, int time_mul)
+{
+	long long result;
+	double cpu_energy_units, package_before, package_after;
+	double package_power;
+
+	result = read_msr(fd, MSR_POWER_UNIT);
+	cpu_energy_units = pow(0.5, (double)((result >> 8) & 0x1f));
+
+	package_before = get_package_power(fd, cpu_energy_units);
+
+	msleep(1000 / time_mul);
+
+	package_after = get_package_power(fd, cpu_energy_units);
+
+	return (package_after - package_before) * time_mul;
+}

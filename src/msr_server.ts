@@ -22,6 +22,7 @@ interface msr_obj {
         hyper_threading: number,
         logical_cores: number,
         physical_cores: number,
+        per_core_freq: number[]
     }
     memory: {
         total: number
@@ -36,7 +37,7 @@ interface exec_json {
 }
 
 app.get('/', (_req, res: Res) => {
-    exec('sudo msr_gen -o', (error: ExecException | null, stdout: string, stderr: string) => {
+    exec('sudo msr_gen -j', (error: ExecException | null, stdout: string, stderr: string) => {
         if (stdout !== null)
             return res.send(stdout);
         else if (stderr !== null)

@@ -37,3 +37,12 @@ pub extern "C" fn get_cpu_name_rs() -> *const c_char {
     }
 }
 
+pub fn non_c_name_and_vendor() -> (String, String) {
+    let vs = CPUID.get_vendor_info();
+    let bs = CPUID.get_processor_brand_string();
+    return match (vs, bs) {
+        (Some(res_v), Some(res_b)) => (res_v.to_string(), res_b.as_str().to_owned()),
+        _ => ("none".to_owned(), "none".to_owned()),
+    }
+}
+

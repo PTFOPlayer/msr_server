@@ -1,7 +1,7 @@
 use std::ffi::{c_char, CString};
 
 use lazy_static::lazy_static;
-use raw_cpuid::{CpuId}; 
+use raw_cpuid::CpuId; 
 
 lazy_static!{
     pub static ref CPUID: CpuId = CpuId::new();

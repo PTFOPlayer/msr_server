@@ -6,7 +6,6 @@
 #include <stdint.h>
 #define TIME_MUL 5
 
-
 int main(int argc, char const *argv[])
 {
 	char *vendor = get_cpu_vendor_rs();
@@ -23,7 +22,7 @@ int main(int argc, char const *argv[])
 				double voltage = get_cpu_voltage(fd);
 				// sleep depends on that
 				double package_power = get_cpu_power(fd, TIME_MUL);
-				struct core_stat cs = get_sys_utils_rs(TIME_MUL);
+				struct CoreStat cs = get_sys_utils_rs(TIME_MUL);
 
 				long frequency = cs.freq;
 				double usage = cs.util;
@@ -45,7 +44,7 @@ int main(int argc, char const *argv[])
 			double voltage = get_cpu_voltage(fd);
 			// sleep depends on that
 			double package_power = get_cpu_power(fd, TIME_MUL);
-			struct core_stat cs = get_sys_utils_rs(TIME_MUL);
+			struct CoreStat cs = get_sys_utils_rs(TIME_MUL);
 
 			long frequency = cs.freq;
 			double usage = cs.util;
@@ -63,7 +62,7 @@ int main(int argc, char const *argv[])
 			double voltage = get_cpu_voltage(fd);
 			// sleep depends on that
 			double package_power = get_cpu_power(fd, TIME_MUL);
-			struct core_stat cs = get_sys_utils_rs(TIME_MUL);
+			struct CoreStat cs = get_sys_utils_rs(TIME_MUL);
 
 			long frequency = cs.freq;
 			double usage = cs.util;
@@ -73,9 +72,18 @@ int main(int argc, char const *argv[])
 			float temperature = cs.temperature;
 			int threads = cs.threads;
 			int cores = cs.cores;
+			unsigned long long per_core_freq = cs.per_core_freq;
 
-			printf("{\n\t\"cpu\":{\n\t\t\"vendor\" : \"%s,\"\n\t\t\"name\" : \"%s,\"\n\t\t\"power\" : %lf,\n\t\t\"voltage\" : %lf,\n\t\t\"temperature\" : %f,\n\t\t\"frequency\" : %ld,\n\t\t\"usage\" : %lf,\n\t\t\"logical_cores\" : %d,\n\t\t\"physical_cores\" : %d\n\t},\n\t\"memory\":{\n\t\t\"total\" : %llu,\n\t\t\"available\" : %llu,\n\t\t\"used\" : %llu\n\t}\n}\n", vendor, name, package_power, voltage, temperature, frequency, usage, threads, cores,  memory_total / 1024 / 1024, memory_free / 1024 / 1024, memory_used / 1024 / 1024);
+			printf("{\n\t\"cpu\":{\n\t\t\"vendor\" : \"%s,\"\n\t\t\"name\" : \"%s,\"\n\t\t\"power\" : %lf,\n\t\t\"voltage\" : %lf,\n\t\t\"temperature\" : %f,\n\t\t\"frequency\" : %ld,\n\t\t\"usage\" : %lf,\n\t\t\"logical_cores\" : %d,\n\t\t\"physical_cores\" : %d\n\t},\n\t\"memory\":{\n\t\t\"total\" : %llu,\n\t\t\"available\" : %llu,\n\t\t\"used\" : %llu\n\t}\n}\n", vendor, name, package_power, voltage, temperature, frequency, usage, threads, cores, memory_total / 1024 / 1024, memory_free / 1024 / 1024, memory_used / 1024 / 1024);
+
+			
 		}
-	} else printf("error: no provided arguments\n -f: writing to file `/msr_data.toml`\n -o: output to terminal in toml format\n -j: output to terminal in json format");
-
+		if (strcmp(argv[1], "-pcf") == 0) {
+			struct CoreStat cs = get_sys_utils_rs(TIME_MUL);
+			for (int i = 0; i < cs.threads; i++)
+			printf("%ld", cs.per_core_freq[i]);
+		}
+	}
+	else
+		printf("error: no provided arguments\n -f: writing to file `/msr_data.toml`\n -o: output to terminal in toml format\n -j: output to terminal in json format");
 }

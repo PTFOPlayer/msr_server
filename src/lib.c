@@ -1,5 +1,5 @@
 
-struct core_stat {
+struct CoreStat {
     unsigned long long freq;
     double util;
     int threads;
@@ -8,10 +8,11 @@ struct core_stat {
     unsigned long long mem_total;
     unsigned long long mem_free;
     unsigned long long mem_used;
+    unsigned long long * per_core_freq;
 };
 
 char *  get_cpu_vendor_rs();
 char *  get_cpu_name_rs();
  
-struct core_stat get_sys_utils_rs(int time_mul);
+struct CoreStat get_sys_utils_rs(int time_mul);
 

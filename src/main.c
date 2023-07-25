@@ -4,7 +4,29 @@
 #include "data_getters/msr_data.h"
 #include "lib.c"
 #include <stdint.h>
+#include <pthread.h>
 #define TIME_MUL 5
+
+void *update_voltage(void *voltage)
+{
+	int fd = open_msr(0);
+	while (true)
+	{
+
+		msleep(1000 / TIME_MUL);
+		*((double *)voltage) = get_cpu_voltage(fd);
+	}
+}
+
+void *update_power(void *package_power)
+{
+	int fd = open_msr(0);
+	while (true)
+	{
+		*((double *)package_power) = get_cpu_power(fd, TIME_MUL);
+	}
+}
+
 
 int main(int argc, char const *argv[])
 {
@@ -17,27 +39,19 @@ int main(int argc, char const *argv[])
 	{
 		if (strcmp(argv[1], "-f") == 0)
 		{
-			while (1)
-			{
-				double voltage = get_cpu_voltage(fd);
-				// sleep depends on that
-				double package_power = get_cpu_power(fd, TIME_MUL);
-				struct CoreStat cs = get_sys_utils_rs(TIME_MUL);
 
-				long frequency = cs.freq;
-				double usage = cs.util;
-				unsigned long long memory_total = cs.mem_total;
-				unsigned long long memory_free = cs.mem_free;
-				unsigned long long memory_used = cs.mem_used;
-				float temperature = cs.temperature;
-				int threads = cs.threads;
-				int cores = cs.cores;
+			double voltage = get_cpu_voltage(fd);
+			// sleep depends on that
+			double package_power = get_cpu_power(fd, TIME_MUL);
 
-				file = fopen(filepath, "w");
+			pthread_t id_v;
+			pthread_create(&id_v, NULL, update_voltage, &voltage);
 
-				fprintf(file, "[cpu]\nvendor = \"%s\"\nname = \"%s\"\npower = %lf\nvoltage = %lf\ntemperature = %f\nfrequency = %ld\nusage = %lf\nlogical_cores = %d\nphysical_cores = %d\n[memory]\ntotal = %llu\navailable = %llu\nused = %llu\n", vendor, name, package_power, voltage, temperature, frequency, usage, threads, cores, memory_total / 1024 / 1024, memory_free / 1024 / 1024, memory_used / 1024 / 1024);
-				fclose(file);
-			}
+			pthread_t id_p;
+			pthread_create(&id_v, NULL, update_voltage, &voltage);
+			
+
+			toml_to_file_rs(&voltage, &package_power, TIME_MUL);
 		}
 		if (strcmp(argv[1], "-o") == 0)
 		{

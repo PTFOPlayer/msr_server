@@ -91,7 +91,7 @@ static bool get_cpu_ht(int fd)
 	return ht;
 }
 
-static double get_cpu_power(int fd, int time_mul)
+double get_cpu_power(int fd, int time_mul)
 {
 	long long result;
 	double cpu_energy_units, package_before, package_after;

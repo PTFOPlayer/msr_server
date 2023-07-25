@@ -14,6 +14,7 @@ struct CoreStat {
 char *  get_cpu_vendor_rs();
 char *  get_cpu_name_rs();
 
-void print_json_rs(double voltage, double package_power, int time_mul);
- 
+void print_json_rs(double* voltage, double* package_power, int time_mul);
+void print_toml_rs(double* voltage, double* package_power, int time_mul);
+
 struct CoreStat get_sys_utils_rs(int time_mul);

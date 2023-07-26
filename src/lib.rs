@@ -13,7 +13,7 @@ struct DataToJson {
 
 fn process_data(voltage: *mut f64, package_power: *mut f64, time_mul: i32) -> DataToJson {
     let (vendor, name) = non_c_name_and_vendor();
-    let cs = non_c_sys_utils(time_mul);
+    let cs = sys_utils(time_mul);
     let (cpu, mem) = unsafe { cs.split(*voltage, *package_power, vendor, name) };
     return DataToJson { cpu, memory: mem };
 }
@@ -32,24 +32,6 @@ pub extern "C" fn print_toml_rs(voltage: *mut f64, package_power: *mut f64, time
     };
 }
 
-#[no_mangle]
-pub extern "C" fn toml_to_file_rs(voltage: *mut f64, package_power: *mut f64, time_mul: i32) {
-    use std::io::Write;
-    loop {
-        if let Ok(serialized) = toml::to_string(&&process_data(voltage, package_power, time_mul)) {
-            std::thread::sleep(std::time::Duration::from_secs(1));
-            let mut file = std::fs::OpenOptions::new()
-                .write(true)
-                .append(false)
-                .truncate(true)
-                .open("/msr_data.toml")
-                .unwrap();
-            _ = file.write(serialized.as_bytes());
-            file.flush().unwrap();
-            drop(file);
-        }
-    }
-}
 use rocket::{get, routes, State};
 struct DataStruct(*mut f64, *mut f64, i32);
 

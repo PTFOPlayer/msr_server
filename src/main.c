@@ -30,14 +30,12 @@ void *update_power(void *package_power)
 
 int main(int argc, char const *argv[])
 {
-	char *vendor = get_cpu_vendor_rs();
-	char *name = get_cpu_name_rs();
 	int fd = open_msr(0);
 	char *filepath = "/msr_data.toml";
 	FILE *file;
 	if (argc >= 2)
 	{
-		if (strcmp(argv[1], "-f") == 0)
+		if (strcmp(argv[1], "-r") == 0)
 		{
 
 			double voltage = get_cpu_voltage(fd);
@@ -52,12 +50,11 @@ int main(int argc, char const *argv[])
 			
 			server_rs(&voltage, &package_power, TIME_MUL);
 		}
-		if (strcmp(argv[1], "-o") == 0)
+		if (strcmp(argv[1], "-t") == 0)
 		{
 			double voltage = get_cpu_voltage(fd);
 			// sleep depends on that
 			double package_power = get_cpu_power(fd, TIME_MUL);
-			struct CoreStat cs = get_sys_utils_rs(TIME_MUL);
 			print_toml_rs(&voltage, &package_power, TIME_MUL);
 		}
 		if (strcmp(argv[1], "-j") == 0)
@@ -69,5 +66,5 @@ int main(int argc, char const *argv[])
 		}
 	}
 	else
-		printf("error: no provided arguments\n -f: writing to file `/msr_data.toml`\n -o: output to terminal in toml format\n -j: output to terminal in json format");
+		printf("error: no provided arguments\n -r: access via rest api\n -t: output to terminal in toml format\n -j: output to terminal in json format");
 }

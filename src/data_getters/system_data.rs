@@ -77,9 +77,6 @@ pub extern "C" fn get_sys_utils_rs(time_mul: i32) -> CoreStat {
         mem_used: sys.used_memory(),
         per_core_freq: pcf_ptr,
     };
-
-    std::mem::forget(pcf_ptr);
-
     return res;
 }
 

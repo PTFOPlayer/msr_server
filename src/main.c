@@ -50,8 +50,7 @@ int main(int argc, char const *argv[])
 			pthread_t id_p;
 			pthread_create(&id_v, NULL, update_voltage, &voltage);
 			
-
-			toml_to_file_rs(&voltage, &package_power, TIME_MUL);
+			server_rs(&voltage, &package_power, TIME_MUL);
 		}
 		if (strcmp(argv[1], "-o") == 0)
 		{

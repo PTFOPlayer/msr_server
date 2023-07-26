@@ -1,3 +1,5 @@
+#![feature(proc_macro_hygiene, decl_macro)]
+
 pub mod data_getters;
 
 pub use data_getters::*;
@@ -44,6 +46,29 @@ pub extern "C" fn toml_to_file_rs(voltage: *mut f64, package_power: *mut f64, ti
                 .unwrap();
             _ = file.write(serialized.as_bytes());
             file.flush().unwrap();
+            drop(file);
         }
     }
 }
+use rocket::{get, routes, State};
+struct DataStruct(*mut f64, *mut f64, i32);
+
+unsafe impl Send for DataStruct{}
+unsafe impl Sync for DataStruct{}
+
+#[get("/")]
+fn default_path<'a>(data: State<DataStruct>) -> String {
+    let result = process_data(data.0, data.1, data.2);
+    if let Ok(serialized) = serde_json::to_string(&result) {
+        return serialized;
+    } else {
+        return "".to_string();
+    }
+
+}
+
+#[no_mangle]
+pub extern "C" fn server_rs(voltage: *mut f64, package_power: *mut f64, time_mul: i32) {
+    rocket::ignite().mount("/", routes![default_path]).manage(DataStruct(voltage, package_power, time_mul)).launch();
+}
+ 

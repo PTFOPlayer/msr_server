@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "../algorithms/msleep.h"
+#include "../../misc/msleep.h"
 
 #define MSR_PKG_ENERGY_STATUS 0x611
 #define MSR_POWER_UNIT 0x606

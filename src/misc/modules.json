@@ -1,0 +1,16 @@
+{
+    "modules" : [
+        {
+            "name": "lorem",
+            "mode": {
+                "File":""
+            },
+            "input_type": {
+                "Text" :{
+
+                }
+            }
+        }
+
+    ]
+}

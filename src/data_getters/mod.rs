@@ -1,4 +1,3 @@
-pub mod cpuid_data;
-mod system_data;
-pub use cpuid_data::*;
-pub use system_data::*;
+pub mod main_data;
+pub use main_data::cpuid_data::*;
+pub use main_data::system_data::*;

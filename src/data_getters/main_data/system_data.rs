@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 use sysinfo::*;
 
-use crate::cpuid_data::CPUID;
+use crate::main_data::cpuid_data::CPUID;
 
-pub struct CoreStatRs {
+pub struct CoreStatTemporary {
     pub freq: u64,
     pub util: f64,
     pub threads: i32,
@@ -36,8 +36,8 @@ pub struct CpuCore {
     pub per_core_freq: Vec<u64>,
 }
 
-impl CoreStatRs {
-    pub fn split(
+impl CoreStatTemporary {
+    pub fn produce_final_data(
         &self,
         voltage: f64,
         package_power: f64,
@@ -66,7 +66,7 @@ impl CoreStatRs {
     }
 }
 
-pub fn sys_utils(time_mul: i32) -> CoreStatRs {
+pub fn sys_utils(time_mul: i32) -> CoreStatTemporary {
     let mut sys = System::new_all();
 
     sys.refresh_all();
@@ -110,7 +110,7 @@ pub fn sys_utils(time_mul: i32) -> CoreStatRs {
         })
         .collect::<Vec<u64>>();
 
-    let res = CoreStatRs {
+    let res = CoreStatTemporary {
         freq: sys.global_cpu_info().frequency(),
         util: sys.global_cpu_info().cpu_usage() as f64,
         threads: t,

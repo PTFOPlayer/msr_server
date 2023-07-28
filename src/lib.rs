@@ -4,6 +4,7 @@ pub mod data_getters;
 mod misc;
 
 pub use data_getters::*;
+use misc::module_parser::load_modules;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -40,8 +41,8 @@ pub extern "C" fn print_toml_rs(voltage: *mut f64, package_power: *mut f64, time
 use rocket::{get, routes, State};
 struct DataStruct(*mut f64, *mut f64, i32);
 
-unsafe impl Send for DataStruct{}
-unsafe impl Sync for DataStruct{}
+unsafe impl Send for DataStruct {}
+unsafe impl Sync for DataStruct {}
 
 #[get("/")]
 fn full_data(data: State<DataStruct>) -> String {
@@ -59,7 +60,7 @@ fn cpu_data(data: State<DataStruct>) -> String {
     if let Ok(serialized) = serde_json::to_string(&result) {
         return serialized;
     } else {
-        return "error occured on server".to_string();   
+        return "error occured on server".to_string();
     }
 }
 
@@ -69,13 +70,37 @@ fn memory_data(data: State<DataStruct>) -> String {
     if let Ok(serialized) = serde_json::to_string(&result) {
         return serialized;
     } else {
-        return "error occured on server".to_string();   
+        return "error occured on server".to_string();
+    }
+}
+
+#[derive(Serialize, Debug)]
+struct Modules {
+    modules: Vec<String>,
+}
+
+#[get("/modules")]
+fn modules_data() -> String {
+    match load_modules() {
+        Ok(modules) => {
+            let mut vec = vec![];
+            for module in modules.modules {
+                match module.parse_input() {
+                    Ok(data) => vec.push(data),
+                    Err(err) => println!("{}", err.to_string()),
+                }
+            }
+            return serde_json::to_string(&Modules { modules: vec }).unwrap();
+        }
+        Err(err) => err.to_string(),
     }
 }
 
 #[no_mangle]
 pub extern "C" fn server_rs(voltage: *mut f64, package_power: *mut f64, time_mul: i32) {
     println!("{:?}", misc::module_parser::load_modules());
-    rocket::ignite().mount("/", routes![full_data, cpu_data, memory_data]).manage(DataStruct(voltage, package_power, time_mul)).launch();
+    rocket::ignite()
+        .mount("/", routes![full_data, cpu_data, memory_data, modules_data])
+        .manage(DataStruct(voltage, package_power, time_mul))
+        .launch();
 }
- 

@@ -18,8 +18,8 @@ fi
 
 lib=./target/release/libmsr_rs.so
 service1=$(find . | grep msr_server.service)
-
-if (sudo cp $service1 /etc/systemd/system/) && (sudo cp $lib /usr/lib/libmsr_rs.so)
+modules=$(find . | grep modules.json)
+if (sudo cp $service1 /etc/systemd/system/) && (sudo cp $lib /usr/lib/libmsr_rs.so) && (sudo cp $modules /var/msr_server)
 then
     if (gcc -o msr_gen ./src/main.c -I . -l msr_rs -L /usr/lib/ -lm)
     then 

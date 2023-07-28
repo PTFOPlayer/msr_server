@@ -1,16 +1,17 @@
 {
-    "modules" : [
+    "modules": [
         {
-            "name": "lorem",
+            "name": "example_module",
             "mode": {
-                "File":""
+                "Command": {
+                    "command": "ls"
+                }
             },
             "input_type": {
-                "Text" :{
-
+                "Text": {
+                    "check_ascii": true
                 }
             }
         }
-
     ]
 }

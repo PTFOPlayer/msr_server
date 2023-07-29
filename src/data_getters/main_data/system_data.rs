@@ -81,36 +81,34 @@ pub fn sys_utils(time_mul: i32) -> CoreStatTemporary {
         None => false,
     };
 
-    let mut c = t;
-    if ht {
-        c = c / 2;
-    }
-
-    let mut s_temp = 0.;
-    let mut i_i = 0;
-    for i in sys.components() {
-        if i.label().contains("coretemp") {
-            s_temp += i.temperature();
-            i_i += 1;
+    let c = match sys.physical_core_count() {
+        Some(res) => res as i32,
+        None => {
+            if ht {
+                t / 2
+            } else {
+                t
+            }
         }
-    }
+    };
 
-    if i_i == 0 {
-        i_i = 1;
-        s_temp = 1.;
-    }
+    let comp = sys
+        .components()
+        .into_iter()
+        .filter(|x| x.label().contains("coretemp"));
+
+    let i_i = comp.clone().count();
+    let s_temp = comp.map(|x| x.temperature()).sum::<f32>();
 
     let temperature = s_temp / i_i as f32;
 
     let per_core_freq = sys
         .cpus()
         .iter()
-        .map(|c| {
-            c.frequency()
-        })
+        .map(|c| c.frequency())
         .collect::<Vec<u64>>();
 
-    let res = CoreStatTemporary {
+    CoreStatTemporary {
         freq: sys.global_cpu_info().frequency(),
         util: sys.global_cpu_info().cpu_usage() as f64,
         threads: t,
@@ -120,7 +118,5 @@ pub fn sys_utils(time_mul: i32) -> CoreStatTemporary {
         mem_free: sys.available_memory(),
         mem_used: sys.used_memory(),
         per_core_freq,
-    };
-
-    return res;
+    }
 }

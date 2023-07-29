@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Value};
-use std::{fs, str::Utf8Error, string::FromUtf8Error};
+use std::{fs, string::FromUtf8Error};
 
 #[derive(Debug)]
 pub enum ModuleError {
@@ -11,14 +11,7 @@ pub enum ModuleError {
     ModuleSettingsNotFulfilled(String),
     JsonParsingError(serde_json::Error),
     TomlParsingErrorDe(toml::de::Error),
-    TomlParsingErrorSe(toml::ser::Error),
-    Other(String),
-}
-
-impl From<Utf8Error> for ModuleError {
-    fn from(value: Utf8Error) -> Self {
-        ModuleError::ModuleDataParsingError(value.to_string())
-    }
+    TomlParsingErrorSe(toml::ser::Error)
 }
 
 impl From<FromUtf8Error> for ModuleError {
@@ -67,8 +60,7 @@ impl ToString for ModuleError {
             ModuleError::ModuleSettingsNotFulfilled(res) => return res.to_string(),
             ModuleError::JsonParsingError(res) => return res.to_string(),
             ModuleError::TomlParsingErrorDe(res) => return res.to_string(),
-            ModuleError::TomlParsingErrorSe(res) => return res.to_string(),
-            ModuleError::Other(res) => return res.to_string(),
+            ModuleError::TomlParsingErrorSe(res) => return res.to_string()
         }
     }
 }

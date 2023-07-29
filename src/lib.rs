@@ -45,32 +45,29 @@ unsafe impl Send for DataStruct {}
 unsafe impl Sync for DataStruct {}
 
 #[get("/")]
-fn full_data(data: State<DataStruct>) -> String {
+fn full_data(data: State<DataStruct>) -> Result<String, String> {
     let result = process_data(data.0, data.1, data.2);
-    if let Ok(serialized) = serde_json::to_string(&result) {
-        return serialized;
-    } else {
-        return "error occured on server".to_string();
+    match serde_json::to_string(&result) {
+        Ok(res) => Ok(res),
+        Err(err) => Err(err.to_string()),
     }
 }
 
 #[get("/cpu")]
-fn cpu_data(data: State<DataStruct>) -> String {
+fn cpu_data(data: State<DataStruct>) -> Result<String, String> {
     let result = process_data(data.0, data.1, data.2).cpu;
-    if let Ok(serialized) = serde_json::to_string(&result) {
-        return serialized;
-    } else {
-        return "error occured on server".to_string();
+    match serde_json::to_string(&result) {
+        Ok(res) => Ok(res),
+        Err(err) => Err(err.to_string()),
     }
 }
 
 #[get("/memory")]
-fn memory_data(data: State<DataStruct>) -> String {
+fn memory_data(data: State<DataStruct>) -> Result<String, String> {
     let result = process_data(data.0, data.1, data.2).memory;
-    if let Ok(serialized) = serde_json::to_string(&result) {
-        return serialized;
-    } else {
-        return "error occured on server".to_string();
+    match serde_json::to_string(&result) {
+        Ok(res) => Ok(res),
+        Err(err) => Err(err.to_string()),
     }
 }
 
@@ -84,7 +81,7 @@ lazy_static::lazy_static! {
 }
 
 #[get("/modules")]
-fn modules_data() -> String {
+fn modules_data() -> Result<String, String> {
     match MODULES.as_ref() {
         Ok(modules) => {
             let mut vec = vec![];
@@ -94,9 +91,13 @@ fn modules_data() -> String {
                     Err(err) => println!("{}", err.to_string()),
                 }
             }
-            return serde_json::to_string(&Modules { modules: vec }).unwrap();
+
+            match serde_json::to_string(&Modules { modules: vec }) {
+                Ok(res) => Ok(res),
+                Err(err) => Err(err.to_string()),
+            }
         }
-        Err(err) => err.to_string(),
+        Err(err) => Err(err.to_string()),
     }
 }
 

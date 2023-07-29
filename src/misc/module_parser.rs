@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Value};
-use std::{fs, io::BufReader, str::Utf8Error, string::FromUtf8Error};
+use std::{fs, str::Utf8Error, string::FromUtf8Error};
 
 #[derive(Debug)]
 pub enum ModuleError {
@@ -20,6 +20,7 @@ impl From<Utf8Error> for ModuleError {
         ModuleError::ModuleDataParsingError(value.to_string())
     }
 }
+
 impl From<FromUtf8Error> for ModuleError {
     fn from(value: FromUtf8Error) -> Self {
         ModuleError::ModuleDataParsingError(value.to_string())
@@ -66,7 +67,7 @@ impl ToString for ModuleError {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub enum Mode {
     File {
         dir_path: Option<String>,
@@ -82,44 +83,40 @@ pub enum Mode {
     },
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct TextSettings {
     check_ascii: Option<bool>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct ValCheck {
     field: String,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct JsonSettings {
+#[derive(Deserialize, Debug, Clone)]
+pub struct ObjSettings {
     check_value: Option<Vec<ValCheck>>,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct TomlSettings {
-    check_value: Option<Vec<ValCheck>>,
-}
-
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub enum InputType {
     Text { settings: Option<TextSettings> },
-    Json { settings: Option<JsonSettings> },
-    Toml { settings: Option<TomlSettings> },
+    Json { settings: Option<ObjSettings> },
+    Toml { settings: Option<ObjSettings> },
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Module {
     name: String,
     mode: Mode,
     input_type: InputType,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Modules {
     pub modules: Vec<Module>,
 }
+
 
 #[derive(Deserialize, Serialize, Debug)]
 struct ModuleResult {
@@ -128,32 +125,26 @@ struct ModuleResult {
 }
 
 pub fn load_modules() -> Result<Modules, ModuleError> {
-    if let Ok(file) = fs::File::open("/var/msr_server/modules.json")
-    {
-        let reader = BufReader::new(file);
-        let data = serde_json::from_reader(reader)?;
-
-        return Ok(data);
-    } else {
-        return Err(ModuleError::ModuleLoadingError(
-            "error loading ./modules.json".to_owned(),
-        ));
-    }
+    let file = fs::read_to_string("/var/msr_server/modules.json")?;
+    return Ok(serde_json::from_str(&file)?);
 }
+
 impl Module {
     pub fn parse_input(self) -> Result<String, ModuleError> {
         let data = fetch_data(self.mode)?;
 
-        fn check_field(
+        fn check_settings(
             structure: &Value,
-            check_value: Option<Vec<ValCheck>>,
+            settings: Option<ObjSettings>,
         ) -> Result<(), ModuleError> {
-            if let Some(values) = check_value {
-                for check in values {
-                    if structure.get(check.field).is_none() {
-                        return Err(ModuleError::ModuleSettingsNotFulfilled(
-                            "checked field not existing".to_string(),
-                        ));
+            if let Some(settings) = settings {
+                if let Some(values) = settings.check_value {
+                    for check in values {
+                        if structure.get(check.field).is_none() {
+                            return Err(ModuleError::ModuleSettingsNotFulfilled(
+                                "checked field not existing".to_string(),
+                            ));
+                        }
                     }
                 }
             }
@@ -180,9 +171,9 @@ impl Module {
             }
             InputType::Json { settings } => {
                 let json: Value = serde_json::from_str(&data)?;
-                if let Some(settings) = settings {
-                    check_field(&json, settings.check_value)?;
-                }
+
+                check_settings(&json, settings)?;
+
                 return Ok(serde_json::to_string(&ModuleResult {
                     name: self.name,
                     data: serde_json::to_string(&json)?,
@@ -191,9 +182,7 @@ impl Module {
             InputType::Toml { settings } => {
                 let toml: Value = toml::from_str(&data)?;
 
-                if let Some(settings) = settings {
-                    check_field(&toml, settings.check_value)?;
-                }
+                check_settings(&toml, settings)? ;
 
                 return Ok(toml::to_string(&ModuleResult {
                     name: self.name,
@@ -210,12 +199,7 @@ pub fn fetch_data(mode: Mode) -> Result<String, ModuleError> {
             dir_path,
             file_name,
         } => {
-            let mut path = String::new();
-            path += match dir_path {
-                Some(ref res) => res.as_str(),
-                None => "",
-            };
-            path += file_name.as_str();
+            let path = dir_path.clone().unwrap_or("".to_string()) + file_name.as_str();
             let data = fs::read_to_string(path)?;
             Ok(data)
         }
@@ -224,25 +208,12 @@ pub fn fetch_data(mode: Mode) -> Result<String, ModuleError> {
             command,
             args,
         } => {
-            let mut path = String::new();
-            path += match dir_path {
-                Some(ref res) => &res,
-                None => "",
-            };
-            path += command.as_str();
+            let path = dir_path.clone().unwrap_or("".to_string()) + command.as_str();
             let mut process = std::process::Command::new(path);
-            process.args(match args {
-                Some(res) => res,
-                None => vec![],
-            });
-            if let Ok(child) = process.output() {
-                let data = String::from_utf8(child.stdout)?;
-
-                Ok(data)
-            } else {
-                Err(ModuleError::ModuleExecutionError(
-                    "Process failed".to_string(),
-                ))
+            process.args(args.unwrap_or(vec![]));
+            match process.output() {
+                Ok(res) => Ok(String::from_utf8(res.stdout)?),
+                Err(err) => Err(ModuleError::ModuleExecutionError(err.to_string())),
             }
         }
         Mode::Api { url } => Err(ModuleError::Other(

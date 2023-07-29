@@ -4,7 +4,7 @@ pub mod data_getters;
 mod misc;
 
 pub use data_getters::*;
-use misc::module_parser::load_modules;
+use misc::module_parser::{load_modules, ModuleError};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -14,7 +14,7 @@ struct DataToJson {
 }
 
 fn process_data(voltage: *mut f64, package_power: *mut f64, time_mul: i32) -> DataToJson {
-    let (vendor, name) = non_c_name_and_vendor();
+    let (vendor, name) = name_and_vendor();
     let cs = sys_utils(time_mul);
     let (cpu, mem) = unsafe { cs.produce_final_data(*voltage, *package_power, vendor, name) };
     return DataToJson { cpu, memory: mem };
@@ -79,14 +79,18 @@ struct Modules {
     modules: Vec<String>,
 }
 
+lazy_static::lazy_static! {
+    static ref MODULES: Result<misc::module_parser::Modules, ModuleError> = load_modules();
+}
+
 #[get("/modules")]
 fn modules_data() -> String {
-    match load_modules() {
+    match MODULES.as_ref() {
         Ok(modules) => {
             let mut vec = vec![];
-            for module in modules.modules {
-                match module.parse_input() {
-                    Ok(data) => vec.push(data),
+            for module in &modules.modules {
+                match module.clone().parse_input() {
+                    Ok(data) => vec.push(data.to_string()),
                     Err(err) => println!("{}", err.to_string()),
                 }
             }
@@ -98,7 +102,6 @@ fn modules_data() -> String {
 
 #[no_mangle]
 pub extern "C" fn server_rs(voltage: *mut f64, package_power: *mut f64, time_mul: i32) {
-    println!("{:?}", misc::module_parser::load_modules());
     rocket::ignite()
         .mount("/", routes![full_data, cpu_data, memory_data, modules_data])
         .manage(DataStruct(voltage, package_power, time_mul))

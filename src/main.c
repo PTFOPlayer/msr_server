@@ -21,11 +21,8 @@ void *update_power(void *package_power)
 {
 	int fd = open_msr(0);
 	while (true)
-	{
 		*((double *)package_power) = get_cpu_power(fd, TIME_MUL);
-	}
 }
-
 
 int main(int argc, char const *argv[])
 {
@@ -42,7 +39,7 @@ int main(int argc, char const *argv[])
 
 			pthread_t id_p;
 			pthread_create(&id_p, NULL, update_power, &package_power);
-			
+			 
 			server_rs(&voltage, &package_power, TIME_MUL);
 		}
 		else if (strcmp(argv[1], "-t") == 0)

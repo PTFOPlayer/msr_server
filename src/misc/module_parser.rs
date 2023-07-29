@@ -51,6 +51,12 @@ impl From<std::io::Error> for ModuleError {
     }
 }
 
+impl From<reqwest::Error> for ModuleError {
+    fn from(value: reqwest::Error) -> Self {
+        ModuleError::ModuleExecutionError(value.to_string())
+    }
+}
+
 impl ToString for ModuleError {
     fn to_string(&self) -> String {
         match self {
@@ -117,7 +123,6 @@ pub struct Modules {
     pub modules: Vec<Module>,
 }
 
-
 #[derive(Deserialize, Serialize, Debug)]
 struct ModuleResult {
     name: String,
@@ -182,7 +187,7 @@ impl Module {
             InputType::Toml { settings } => {
                 let toml: Value = toml::from_str(&data)?;
 
-                check_settings(&toml, settings)? ;
+                check_settings(&toml, settings)?;
 
                 return Ok(toml::to_string(&ModuleResult {
                     name: self.name,
@@ -216,8 +221,10 @@ pub fn fetch_data(mode: Mode) -> Result<String, ModuleError> {
                 Err(err) => Err(ModuleError::ModuleExecutionError(err.to_string())),
             }
         }
-        Mode::Api { url } => Err(ModuleError::Other(
-            "Functionality not yet supported".to_owned(),
-        )),
+        Mode::Api { url } => {
+            let data = reqwest::blocking::get(url)?;
+            let res = data.text()?;
+            Ok(res)
+        }
     }
 }

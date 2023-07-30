@@ -3,6 +3,8 @@
 pub mod data_getters;
 mod misc;
 
+use std::io::Cursor;
+
 pub use data_getters::*;
 use misc::module_parser::{load_modules, ModuleError};
 use serde::{Deserialize, Serialize};
@@ -38,7 +40,7 @@ pub extern "C" fn print_toml_rs(voltage: *mut f64, package_power: *mut f64, time
     };
 }
 
-use rocket::{get, routes, State};
+use rocket::{get, http::Status, response::Body, routes, Response, State};
 struct DataStruct(*mut f64, *mut f64, i32);
 
 unsafe impl Send for DataStruct {}
@@ -81,7 +83,9 @@ lazy_static::lazy_static! {
 }
 
 #[get("/modules")]
-fn modules_data() -> Result<String, String> {
+fn modules_data() -> Response<'static> {
+    let mut response = Response::new();
+
     match MODULES.as_ref() {
         Ok(modules) => {
             let mut vec = vec![];
@@ -93,11 +97,28 @@ fn modules_data() -> Result<String, String> {
             }
 
             match serde_json::to_string(&Modules { modules: vec }) {
-                Ok(res) => Ok(res),
-                Err(err) => Err(err.to_string()),
+                Ok(res) => {
+                    response.set_raw_body(Body::Sized(Cursor::new(res.clone()), res.len() as u64));
+                    response
+                }
+                Err(err) => {
+                    response.set_raw_status(500, "interla server error");
+                    response.set_raw_body(Body::Sized(
+                        Cursor::new(err.to_string()),
+                        err.to_string().len() as u64,
+                    ));
+                    response
+                }
             }
         }
-        Err(err) => Err(err.to_string()),
+        Err(err) => {
+            response.set_raw_status(500, "interla server error");
+            response.set_raw_body(Body::Sized(
+                Cursor::new(err.to_string()),
+                err.to_string().len() as u64,
+            ));
+            response
+        }
     }
 }
 

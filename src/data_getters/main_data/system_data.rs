@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sysinfo::*;
 
-use crate::main_data::cpuid_data::CPUID;
+use crate::{main_data::cpuid_data::CPUID, CacheData, get_cache};
 
 pub struct CoreStatTemporary {
     pub freq: u64,
@@ -13,6 +13,7 @@ pub struct CoreStatTemporary {
     pub mem_total: u64,
     pub mem_free: u64,
     pub mem_used: u64,
+    pub cache: Vec<CacheData>
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -34,6 +35,7 @@ pub struct CpuCore {
     pub voltage: f64,
     pub package_power: f64,
     pub per_core_freq: Vec<u64>,
+    pub cache: Vec<CacheData>
 }
 
 impl CoreStatTemporary {
@@ -56,6 +58,7 @@ impl CoreStatTemporary {
                 package_power,
                 vendor,
                 name,
+                cache: self.cache.clone(),
             },
             Memory {
                 mem_total: self.mem_total / 1024 / 1024,
@@ -108,6 +111,8 @@ pub fn sys_utils(time_mul: i32) -> CoreStatTemporary {
         .map(|c| c.frequency())
         .collect::<Vec<u64>>();
 
+    let cache = get_cache();
+
     CoreStatTemporary {
         freq: sys.global_cpu_info().frequency(),
         util: sys.global_cpu_info().cpu_usage() as f64,
@@ -118,5 +123,6 @@ pub fn sys_utils(time_mul: i32) -> CoreStatTemporary {
         mem_free: sys.available_memory(),
         mem_used: sys.used_memory(),
         per_core_freq,
+        cache,
     }
 }

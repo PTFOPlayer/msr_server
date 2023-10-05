@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sysinfo::*;
 
-use crate::{main_data::cpuid_data::CPUID, CacheData, get_cache};
+use crate::{get_cache, main_data::cpuid_data::CPUID, CacheData};
 
 pub struct CoreStatTemporary {
     pub freq: u64,
@@ -13,7 +13,7 @@ pub struct CoreStatTemporary {
     pub mem_total: u64,
     pub mem_free: u64,
     pub mem_used: u64,
-    pub cache: Vec<CacheData>
+    pub cache: Vec<CacheData>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,7 +35,7 @@ pub struct CpuCore {
     pub voltage: f64,
     pub package_power: f64,
     pub per_core_freq: Vec<u64>,
-    pub cache: Vec<CacheData>
+    pub cache: Vec<CacheData>,
 }
 
 impl CoreStatTemporary {

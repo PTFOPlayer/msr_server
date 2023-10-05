@@ -40,7 +40,7 @@ pub extern "C" fn print_toml_rs(voltage: *mut f64, package_power: *mut f64, time
     };
 }
 
-use rocket::{get, http::Status, response::Body, routes, Response, State};
+use rocket::{get, response::Body, routes, Response, State};
 struct DataStruct(*mut f64, *mut f64, i32);
 
 unsafe impl Send for DataStruct {}
@@ -73,6 +73,14 @@ fn memory_data(data: State<DataStruct>) -> Result<String, String> {
     }
 }
 
+#[no_mangle]
+pub extern "C" fn server_rs(voltage: *mut f64, package_power: *mut f64, time_mul: i32) {
+    rocket::ignite()
+        .mount("/", routes![full_data, cpu_data, memory_data, modules_data])
+        .manage(DataStruct(voltage, package_power, time_mul))
+        .launch();
+}
+
 #[derive(Serialize, Debug)]
 struct Modules {
     modules: Vec<String>,
@@ -80,6 +88,15 @@ struct Modules {
 
 lazy_static::lazy_static! {
     static ref MODULES: Result<misc::module_parser::Modules, ModuleError> = load_modules();
+}
+
+#[inline(always)]
+fn generate_error(err: String) -> Response<'static> {
+    let mut response = Response::new();
+
+    response.set_raw_status(500, "interla server error");
+    response.set_raw_body(Body::Sized(Cursor::new(err.clone()), err.len() as u64));
+    response
 }
 
 #[get("/modules")]
@@ -101,31 +118,9 @@ fn modules_data() -> Response<'static> {
                     response.set_raw_body(Body::Sized(Cursor::new(res.clone()), res.len() as u64));
                     response
                 }
-                Err(err) => {
-                    response.set_raw_status(500, "interla server error");
-                    response.set_raw_body(Body::Sized(
-                        Cursor::new(err.to_string()),
-                        err.to_string().len() as u64,
-                    ));
-                    response
-                }
+                Err(err) => generate_error(err.to_string()),
             }
         }
-        Err(err) => {
-            response.set_raw_status(500, "interla server error");
-            response.set_raw_body(Body::Sized(
-                Cursor::new(err.to_string()),
-                err.to_string().len() as u64,
-            ));
-            response
-        }
+        Err(err) => generate_error(err.to_string()),
     }
-}
-
-#[no_mangle]
-pub extern "C" fn server_rs(voltage: *mut f64, package_power: *mut f64, time_mul: i32) {
-    rocket::ignite()
-        .mount("/", routes![full_data, cpu_data, memory_data, modules_data])
-        .manage(DataStruct(voltage, package_power, time_mul))
-        .launch();
 }

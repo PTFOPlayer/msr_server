@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use raw_cpuid::CpuId;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 lazy_static! {
     pub static ref CPUID: CpuId = CpuId::new();
@@ -15,7 +15,6 @@ pub fn name_and_vendor() -> (String, String) {
     };
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CacheData {
     pub size: i64,
@@ -23,27 +22,27 @@ pub struct CacheData {
     pub cache_type: String,
 }
 
-
 pub fn get_cache() -> Vec<CacheData> {
     match CPUID.get_cache_parameters() {
         Some(res) => {
+            let mut cache_vec = vec![];
+            for c in res {
+                let size = c.associativity()
+                    * c.physical_line_partitions()
+                    * c.coherency_line_size()
+                    * c.sets();
+                let size = size as i64;
+                let level = c.level();
+                let cache_type = c.cache_type().to_string();
 
-        let mut cache_vec = vec![];
-        for c in res {
-            let size =
-                c.associativity() * c.physical_line_partitions() * c.coherency_line_size() * c.sets();
-            let size = size as i64;
-            let level = c.level();
-            let cache_type = c.cache_type().to_string();
-
-            cache_vec.push(CacheData {
-                size,
-                level,
-                cache_type,
-            });
+                cache_vec.push(CacheData {
+                    size,
+                    level,
+                    cache_type,
+                });
+            }
+            return cache_vec;
         }
-            return cache_vec
-        },
         None => {
             vec![]
         }

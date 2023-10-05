@@ -11,7 +11,7 @@ pub enum ModuleError {
     ModuleSettingsNotFulfilled(String),
     JsonParsingError(serde_json::Error),
     TomlParsingErrorDe(toml::de::Error),
-    TomlParsingErrorSe(toml::ser::Error)
+    TomlParsingErrorSe(toml::ser::Error),
 }
 
 impl From<FromUtf8Error> for ModuleError {
@@ -60,7 +60,7 @@ impl ToString for ModuleError {
             ModuleError::ModuleSettingsNotFulfilled(res) => return res.to_string(),
             ModuleError::JsonParsingError(res) => return res.to_string(),
             ModuleError::TomlParsingErrorDe(res) => return res.to_string(),
-            ModuleError::TomlParsingErrorSe(res) => return res.to_string()
+            ModuleError::TomlParsingErrorSe(res) => return res.to_string(),
         }
     }
 }

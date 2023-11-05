@@ -1,9 +1,11 @@
 use lazy_static::lazy_static;
-use raw_cpuid::CpuId;
+use raw_cpuid::{CpuId, CpuIdReaderNative};
 use serde::{Deserialize, Serialize};
 
 lazy_static! {
-    pub static ref CPUID: CpuId = CpuId::new();
+    pub static ref CPUID: CpuId<CpuIdReaderNative> = CpuId::new();
+    pub static ref NAME_VENDOR: (String, String) = name_and_vendor();
+    pub static ref CACHE_DATA: Vec<CacheData> = get_cache();
 }
 
 pub fn name_and_vendor() -> (String, String) {
@@ -19,7 +21,7 @@ pub fn name_and_vendor() -> (String, String) {
 pub struct CacheData {
     pub size: i64,
     pub level: u8,
-    pub cache_type: String,
+    pub cache_type: String
 }
 
 pub fn get_cache() -> Vec<CacheData> {
@@ -34,11 +36,11 @@ pub fn get_cache() -> Vec<CacheData> {
                 let size = size as i64;
                 let level = c.level();
                 let cache_type = c.cache_type().to_string();
-
+                
                 cache_vec.push(CacheData {
                     size,
                     level,
-                    cache_type,
+                    cache_type
                 });
             }
             return cache_vec;

@@ -13,12 +13,12 @@ const TIME_MUL: i32 = 5;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct DataToJson {
-    cpu: CoreStat
+    core: CoreStat
 }
 
 fn process_data(voltage: *mut f64, package_power: *mut f64) -> DataToJson {
-    let  cpu = unsafe { CORE_STAT.clone().update(*voltage, *package_power) };
-    return DataToJson { cpu };
+    let  core = unsafe { CORE_STAT.clone().update(*voltage, *package_power) };
+    return DataToJson { core };
 }
 
 #[no_mangle]

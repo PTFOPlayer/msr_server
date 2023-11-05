@@ -40,19 +40,19 @@ int main(int argc, char const *argv[])
 			pthread_t id_p;
 			pthread_create(&id_p, NULL, update_power, &package_power);
 			 
-			server_rs(&voltage, &package_power, TIME_MUL);
+			server_rs(&voltage, &package_power);
 		}
 		else if (strcmp(argv[1], "-t") == 0)
 		{
 			double voltage = get_cpu_voltage(fd);
 			double package_power = get_cpu_power(fd, TIME_MUL);
-			print_toml_rs(&voltage, &package_power, TIME_MUL);
+			print_toml_rs(&voltage, &package_power);
 		}
 		else if (strcmp(argv[1], "-j") == 0)
 		{
 			double voltage = get_cpu_voltage(fd);
 			double package_power = get_cpu_power(fd, TIME_MUL);
-			print_json_rs(&voltage, &package_power, TIME_MUL);
+			print_json_rs(&voltage, &package_power);
 		} else {
 			printf("argument not recognized");
 		}

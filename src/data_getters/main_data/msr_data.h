@@ -84,13 +84,6 @@ static double get_cpu_temperature(int fd)
 	return t2 - t1;
 }
 
-static bool get_cpu_ht(int fd)
-{
-	long long result = read_msr(fd, MSR_MISC_ENABLE);
-	bool ht = (bool)(result & 24);
-	return ht;
-}
-
 double get_cpu_power(int fd, int time_mul)
 {
 	long long result;

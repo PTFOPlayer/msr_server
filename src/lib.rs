@@ -13,39 +13,35 @@ const TIME_MUL: i32 = 5;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct DataToJson {
-    core: CoreStat
+    core: CoreStat,
 }
 
-fn process_data(voltage: *mut f64, package_power: *mut f64) -> DataToJson {
-    let  core = unsafe { CORE_STAT.clone().update(*voltage, *package_power) };
+fn process_data() -> DataToJson {
+    let core = CORE_STAT.clone().update(get_voltage(), get_power());
     return DataToJson { core };
 }
 
 #[no_mangle]
-pub extern "C" fn print_json_rs(voltage: *mut f64, package_power: *mut f64) {
-    match serde_json::to_string(&process_data(voltage, package_power)) {
+pub extern "C" fn print_json_rs() {
+    match serde_json::to_string(&process_data()) {
         Ok(ser) => println!("{}", ser),
         Err(_) => println!("error serializing data"),
     };
 }
 
 #[no_mangle]
-pub extern "C" fn print_toml_rs(voltage: *mut f64, package_power: *mut f64) {
-    match toml::to_string(&&process_data(voltage, package_power)) {
+pub extern "C" fn print_toml_rs() {
+    match toml::to_string(&&process_data()) {
         Ok(ser) => println!("{}", ser),
         Err(_) => println!("error serializing data"),
     };
 }
 
-use rocket::{get, response::Body, routes, Response, State};
-struct DataStruct(*mut f64, *mut f64, i32);
-
-unsafe impl Send for DataStruct {}
-unsafe impl Sync for DataStruct {}
+use rocket::{get, response::Body, routes, Response};
 
 #[get("/")]
-fn full_data(data: State<DataStruct>) -> Result<String, String> {
-    let result = process_data(data.0, data.1);
+fn full_data() -> Result<String, String> {
+    let result = process_data();
     match serde_json::to_string(&result) {
         Ok(res) => Ok(res),
         Err(err) => Err(err.to_string()),
@@ -53,10 +49,9 @@ fn full_data(data: State<DataStruct>) -> Result<String, String> {
 }
 
 #[no_mangle]
-pub extern "C" fn server_rs(voltage: *mut f64, package_power: *mut f64, time_mul: i32) {
+pub extern "C" fn server_rs() {
     rocket::ignite()
         .mount("/", routes![full_data, modules_data])
-        .manage(DataStruct(voltage, package_power, time_mul))
         .launch();
 }
 

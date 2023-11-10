@@ -5,11 +5,6 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[lib]
-name = "msr_rs"
-#crate-type = ["staticlib"]
-crate-type = ["cdylib"]
-
 [dependencies]
 raw-cpuid = "11.0.1"
 sysinfo = "0.29.10"

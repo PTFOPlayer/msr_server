@@ -3,7 +3,10 @@
 pub mod data_getters;
 mod misc;
 
-use std::io::Cursor;
+use std::{
+    env::args,
+    io::Cursor,
+};
 
 pub use data_getters::*;
 use misc::module_parser::{load_modules, ModuleError};
@@ -22,7 +25,7 @@ fn process_data() -> DataToJson {
 }
 
 #[no_mangle]
-pub extern "C" fn print_json_rs() {
+pub extern "C" fn print_json() {
     match serde_json::to_string(&process_data()) {
         Ok(ser) => println!("{}", ser),
         Err(_) => println!("error serializing data"),
@@ -30,7 +33,7 @@ pub extern "C" fn print_json_rs() {
 }
 
 #[no_mangle]
-pub extern "C" fn print_toml_rs() {
+pub extern "C" fn print_toml() {
     match toml::to_string(&&process_data()) {
         Ok(ser) => println!("{}", ser),
         Err(_) => println!("error serializing data"),
@@ -49,7 +52,7 @@ fn full_data() -> Result<String, String> {
 }
 
 #[no_mangle]
-pub extern "C" fn server_rs() {
+pub extern "C" fn server() {
     rocket::ignite()
         .mount("/", routes![full_data, modules_data])
         .launch();
@@ -95,5 +98,23 @@ fn modules_data() -> Response<'static> {
             }
         }
         Err(err) => generate_error(err.to_string()),
+    }
+}
+
+fn main() {
+    let args = args().collect::<Vec<String>>();
+
+    if args.len() != 2 {
+        println!("error: wrong ammount of arguments (max 1)\n -r: access via rest api\n -t: output to terminal in toml format\n -j: output to terminal in json format");
+    }
+
+    match args[1].as_str() {
+        "-r" => server(),
+        "-t" => print_toml(),
+        "-j" => print_json(),
+
+        &_ => {
+            println!("not recognized argument");
+        }
     }
 }

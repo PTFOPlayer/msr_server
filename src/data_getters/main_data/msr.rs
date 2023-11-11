@@ -2,7 +2,7 @@
 use std::{
     fs::OpenOptions,
     io::{ Read, Seek, SeekFrom},
-    path::Path,
+    path::Path, process::exit,
 };
 
 use crate::TIME_MUL;
@@ -21,12 +21,30 @@ fn read_msr(core: u16, addr: u32) -> Result<u64, ()> {
         return Err(());
     }
 
-    let mut file = OpenOptions::new().read(true).open(path).map_err(|_| ())?;
+    let mut file = match OpenOptions::new().read(true).open(path) {
+        Ok(res) => res,
+        Err(_) => {
+            println!("sudo mode required");
+            exit(1);
+        },
+    };
 
-    file.seek(SeekFrom::Start(addr.into())).map_err(|_| ())?;
+    let _position = match file.seek(SeekFrom::Start(addr.into())) {
+        Ok(res) => res,
+        Err(err) => {
+            println!("error occured while seaking msr file: {}", err);
+            exit(1);
+        },
+    };
 
     let mut buff = [0u8; 8];
-    file.read_exact(&mut buff).map_err(|_| ())?;
+    match file.read_exact(&mut buff) {
+        Ok(_) => {},
+        Err(err) => {
+            println!("error occured while reading msr buffer: {}", err);
+            exit(1);
+        },
+    };
 
     Ok(u64::from_ne_bytes(buff))
 }

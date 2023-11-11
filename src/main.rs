@@ -114,7 +114,7 @@ fn main() {
         "-j" => print_json(),
 
         &_ => {
-            println!("not recognized argument");
+            println!("argument not recognized");
         }
     }
 }

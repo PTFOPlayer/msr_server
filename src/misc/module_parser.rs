@@ -5,7 +5,6 @@ use std::{fs, string::FromUtf8Error};
 #[derive(Debug)]
 pub enum ModuleError {
     ModuleLoadingError(String),
-    ModuleParsingError(String),
     ModuleExecutionError(String),
     ModuleDataParsingError(String),
     ModuleSettingsNotFulfilled(String),
@@ -54,7 +53,6 @@ impl ToString for ModuleError {
     fn to_string(&self) -> String {
         match self {
             ModuleError::ModuleLoadingError(res) => return res.to_string(),
-            ModuleError::ModuleParsingError(res) => return res.to_string(),
             ModuleError::ModuleExecutionError(res) => return res.to_string(),
             ModuleError::ModuleDataParsingError(res) => return res.to_string(),
             ModuleError::ModuleSettingsNotFulfilled(res) => return res.to_string(),

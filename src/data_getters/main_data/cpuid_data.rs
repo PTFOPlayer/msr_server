@@ -21,14 +21,13 @@ pub fn name_and_vendor() -> (String, String) {
 pub struct CacheData {
     pub size: i64,
     pub level: u8,
-    pub cache_type: String
+    pub cache_type: String,
 }
 
 pub fn get_cache() -> Vec<CacheData> {
     match CPUID.get_cache_parameters() {
-        Some(res) => {
-            let mut cache_vec = vec![];
-            for c in res {
+        Some(res) => res
+            .map(|c| {
                 let size = c.associativity()
                     * c.physical_line_partitions()
                     * c.coherency_line_size()
@@ -36,15 +35,14 @@ pub fn get_cache() -> Vec<CacheData> {
                 let size = size as i64;
                 let level = c.level();
                 let cache_type = c.cache_type().to_string();
-                
-                cache_vec.push(CacheData {
+
+                CacheData {
                     size,
                     level,
-                    cache_type
-                });
-            }
-            return cache_vec;
-        }
+                    cache_type,
+                }
+            })
+            .collect::<Vec<CacheData>>(),
         None => {
             vec![]
         }

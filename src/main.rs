@@ -28,23 +28,15 @@ fn print_json() {
     };
 }
 
-fn print_toml() {
-    match toml::to_string(&&process_data()) {
-        Ok(ser) => println!("{}", ser),
-        Err(_) => println!("error serializing data"),
-    };
-}
-
 fn main() {
     let args = args().collect::<Vec<String>>();
 
     if args.len() != 2 {
-        println!("error: wrong ammount of arguments (max 1)\n -r: access via rest api\n -t: output to terminal in toml format\n -j: output to terminal in json format");
+        println!("error: wrong ammount of arguments (max 1)\n -r: access via rest api\n -j: output to terminal in json format");
     }
 
     match args[1].as_str() {
         "-r" => server(),
-        "-t" => print_toml(),
         "-j" => print_json(),
 
         &_ => {

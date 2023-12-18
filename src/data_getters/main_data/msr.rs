@@ -1,12 +1,11 @@
-
 use std::{
     fs::OpenOptions,
-    io::{ Read, Seek, SeekFrom},
-    path::Path, process::exit,
+    io::{Read, Seek, SeekFrom},
+    path::Path,
+    process::exit,
 };
 
 use crate::TIME_MUL;
-
 
 const MSR_PKG_ENERGY_STATUS: u32 = 0x611;
 const MSR_POWER_UNIT: u32 = 0x606;
@@ -26,7 +25,7 @@ fn read_msr(core: u16, addr: u32) -> Result<u64, ()> {
         Err(_) => {
             println!("sudo mode required");
             exit(1);
-        },
+        }
     };
 
     let _position = match file.seek(SeekFrom::Start(addr.into())) {
@@ -34,16 +33,16 @@ fn read_msr(core: u16, addr: u32) -> Result<u64, ()> {
         Err(err) => {
             println!("error occured while seaking msr file: {}", err);
             exit(1);
-        },
+        }
     };
 
     let mut buff = [0u8; 8];
     match file.read_exact(&mut buff) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(err) => {
             println!("error occured while reading msr buffer: {}", err);
             exit(1);
-        },
+        }
     };
 
     Ok(u64::from_ne_bytes(buff))

@@ -1,6 +1,4 @@
-use std::io::Cursor;
-
-pub use rocket::{get, response::Body, routes, Response};
+use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 use serde::Serialize;
 
 use crate::{
@@ -11,18 +9,20 @@ use crate::{
     process_data,
 };
 
-pub fn server() {
-    rocket::ignite()
-        .mount("/", routes![full_data, modules_data])
-        .launch();
+#[actix_web::main]
+pub async fn server() -> std::io::Result<()> {
+    HttpServer::new(|| App::new().service(full_data).service(modules_data))
+        .bind(("127.0.0.1", 8000))?
+        .run()
+        .await
 }
 
 #[get("/")]
-fn full_data() -> Result<String, String> {
+async fn full_data() -> impl Responder {
     let result = process_data();
     match serde_json::to_string(&result) {
-        Ok(res) => Ok(res),
-        Err(err) => Err(err.to_string()),
+        Ok(res) => HttpResponse::Ok().body(res),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
@@ -35,18 +35,8 @@ lazy_static::lazy_static! {
     static ref MODULES: Result<misc::module_parser::Modules, ModuleError> = load_modules();
 }
 
-#[inline(always)]
-fn generate_error(err: String) -> Response<'static> {
-    let mut response = Response::new();
-    response.set_raw_status(500, "interla server error");
-    response.set_raw_body(Body::Sized(Cursor::new(err.clone()), err.len() as u64));
-    response
-}
-
-#[get("/modules")]
-fn modules_data() -> Response<'static> {
-    let mut response = Response::new();
-
+#[get("/")]
+async fn modules_data() -> impl Responder {
     match MODULES.as_ref() {
         Ok(modules) => {
             let mut vec = vec![];
@@ -56,15 +46,11 @@ fn modules_data() -> Response<'static> {
                     Err(err) => println!("{}", err.to_string()),
                 }
             }
-
             match serde_json::to_string(&Modules { modules: vec }) {
-                Ok(res) => {
-                    response.set_raw_body(Body::Sized(Cursor::new(res.clone()), res.len() as u64));
-                    response
-                }
-                Err(err) => generate_error(err.to_string()),
+                Ok(res) => HttpResponse::Ok().body(res),
+                Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
             }
         }
-        Err(err) => generate_error(err.to_string()),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }

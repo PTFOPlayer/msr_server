@@ -25,7 +25,6 @@ pub struct CacheData {
 }
 
 pub fn get_cache() -> Vec<CacheData> {
-    
     match CPUID.get_cache_parameters() {
         Some(res) => res
             .map(|c| {

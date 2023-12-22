@@ -28,7 +28,7 @@ fn print_json() {
     };
 }
 
-fn main() {
+fn main() -> std::io::Result<()>{
     let args = args().collect::<Vec<String>>();
 
     if args.len() != 2 {
@@ -37,10 +37,10 @@ fn main() {
 
     match args[1].as_str() {
         "-r" => server(),
-        "-j" => print_json(),
+        "-j" => Ok(print_json()),
 
-        &_ => {
+        &_ => Ok({
             println!("argument not recognized");
-        }
+        })
     }
 }

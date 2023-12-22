@@ -1,13 +1,4 @@
 #!/bin/bash
-if (which g++) && (which cmake) && (which make)
-then
-    echo "g++, cmake, make: OK"
-else
-    
-    echo "g++, cmake or make not found"
-    exit 1
-fi
-
 cargo build --release
 cdir=`pwd`
 

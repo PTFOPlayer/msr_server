@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use sysinfo::*;
@@ -6,6 +8,7 @@ use crate::{main_data::cpuid_data::CPUID, CacheData, CACHE_DATA, NAME_VENDOR, TI
 
 lazy_static! {
     pub static ref CORE_STAT: CoreStat = sys_utils();
+    pub static ref SYS: Arc<Mutex<System>> = Arc::new(Mutex::new(System::new_all()));
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -31,13 +34,8 @@ impl CoreStat {
         self.voltage = voltage;
         self.package_power = package_power;
 
-        let mut sys = System::new_all();
-
-        sys.refresh_all();
-
-        std::thread::sleep(std::time::Duration::from_millis(1000 / TIME_MUL as u64));
-
-        sys.refresh_all();
+        let mut sys = SYS.lock().unwrap();
+        sys.refresh_system();
 
         let comp = sys
             .components()

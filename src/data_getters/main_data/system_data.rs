@@ -125,3 +125,61 @@ pub fn sys_utils() -> CoreStat {
         package_power: 0.0,
     }
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Drive {
+    name: String,
+    mount_point: String,
+    file_sys: String,
+    kind: String,
+    removable: bool,
+    space: u64,
+    available_space: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Drives {
+    drives: Vec<Drive>,
+}
+
+pub fn get_drives() -> Drives {
+    let mut sys = SYS.lock().unwrap();
+
+    let mut v = vec![];
+    for d in sys.disks_mut() {
+        d.refresh();
+        v.push(Drive {
+            name: d.name().to_string_lossy().into(),
+            mount_point: d.mount_point().to_string_lossy().into(),
+            file_sys: String::from_utf8_lossy(d.file_system()).into(),
+            kind: format!("{:?}", d.kind()),
+            removable: d.is_removable(),
+            space: d.total_space(),
+            available_space: d.available_space(),
+        });
+    }
+
+    Drives { drives: v }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SystemInfo {
+    host_name: String,
+    boot_time: u64,
+    distro_id: String,
+    kernel_version: String,
+    os_version: String,
+}
+
+pub fn get_system() -> SystemInfo {
+    let sys = SYS.lock().unwrap();
+    let default = "".to_owned();
+
+    SystemInfo {
+        host_name: sys.host_name().map_or(default.clone(), |res| res),
+        boot_time: sys.boot_time(),
+        distro_id: sys.distribution_id(),
+        kernel_version: sys.kernel_version().map_or(default.clone(), |res| res),
+        os_version: sys.long_os_version().map_or(default, |res| res),
+    }
+}

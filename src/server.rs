@@ -2,24 +2,49 @@ use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 use serde::Serialize;
 
 use crate::{
+    get_drives,
     misc::{
         self,
         module_parser::{load_modules, ModuleError},
     },
-    process_data,
+    process_data, get_system,
 };
 
 #[actix_web::main]
 pub async fn server() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(full_data).service(modules_data))
-        .bind(("127.0.0.1", 8000))?
-        .run()
-        .await
+    HttpServer::new(|| {
+        App::new()
+            .service(hardware_data)
+            .service(modules_data)
+            .service(drives_data)
+            .service(system_data)
+    })
+    .bind(("127.0.0.1", 8000))?
+    .run()
+    .await
 }
 
 #[get("/")]
-async fn full_data() -> impl Responder {
+async fn hardware_data() -> impl Responder {
     let result = process_data();
+    match serde_json::to_string(&result) {
+        Ok(res) => HttpResponse::Ok().body(res),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+#[get("/drives")]
+async fn drives_data() -> impl Responder {
+    let result = get_drives();
+    match serde_json::to_string(&result) {
+        Ok(res) => HttpResponse::Ok().body(res),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+
+#[get("/system")]
+async fn system_data() -> impl Responder {
+    let result = get_system();
     match serde_json::to_string(&result) {
         Ok(res) => HttpResponse::Ok().body(res),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),

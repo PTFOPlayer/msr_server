@@ -7,18 +7,12 @@ use server::server;
 use std::env::args;
 
 pub use data_getters::*;
-use serde::{Deserialize, Serialize};
 
 const TIME_MUL: i32 = 5;
 
-#[derive(Debug, Serialize, Deserialize)]
-struct DataToJson {
-    core: CoreStat,
-}
-
-fn process_data() -> DataToJson {
-    let core = CORE_STAT.clone().update(get_voltage(), get_power());
-    return DataToJson { core };
+#[inline(always)]
+fn process_data() -> CoreStat {
+    CORE_STAT.clone().update(get_voltage(), get_power())
 }
 
 fn print_json() {
@@ -28,7 +22,7 @@ fn print_json() {
     };
 }
 
-fn main() -> std::io::Result<()>{
+fn main() -> std::io::Result<()> {
     let args = args().collect::<Vec<String>>();
 
     if args.len() != 2 {
@@ -41,6 +35,6 @@ fn main() -> std::io::Result<()>{
 
         &_ => Ok({
             println!("argument not recognized");
-        })
+        }),
     }
 }

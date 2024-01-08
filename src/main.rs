@@ -12,7 +12,8 @@ const TIME_MUL: i32 = 5;
 
 #[inline(always)]
 fn process_data() -> CoreStat {
-    CORE_STAT.clone().update(get_voltage(), get_power())
+    let data = CORE_STAT.clone().update(get_voltage(), get_power());
+    data
 }
 
 fn print_json() {

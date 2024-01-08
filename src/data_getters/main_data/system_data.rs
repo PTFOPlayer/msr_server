@@ -9,6 +9,8 @@ use crate::{main_data::cpuid_data::CPUID, CacheData, CACHE_DATA, NAME_VENDOR, TI
 lazy_static! {
     pub static ref CORE_STAT: CoreStat = sys_utils();
     pub static ref SYS: Arc<Mutex<System>> = Arc::new(Mutex::new(System::new_all()));
+    pub static ref COMP: Arc<Mutex<Components>> =
+        Arc::new(Mutex::new(Components::new_with_refreshed_list()));
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -17,7 +19,6 @@ pub struct CoreStat {
     pub package_power: f64,
     pub vendor: String,
     pub name: String,
-    pub freq: u64,
     pub util: f64,
     pub threads: i32,
     pub cores: i32,
@@ -35,17 +36,17 @@ impl CoreStat {
         self.package_power = package_power;
 
         let mut sys = SYS.lock().unwrap();
-        sys.refresh_system();
+        sys.refresh_cpu();
+        sys.refresh_memory();
 
-        let comp = sys
-            .components()
-            .into_iter()
-            .filter(|x| x.label().contains("coretemp"));
+        let mut comp = COMP.lock().unwrap();
+        comp.refresh();
+        let temp = comp.into_iter().find(|x| x.label().contains("coretemp"));
 
-        let i_i = comp.clone().count();
-        let s_temp = comp.map(|x| x.temperature()).sum::<f32>();
-
-        self.temperature = s_temp / i_i as f32;
+        self.temperature = match temp {
+            Some(res) => res.temperature(),
+            None => 0.,
+        };
 
         self.mem_free = sys.available_memory();
         self.mem_used = sys.used_memory();
@@ -55,10 +56,9 @@ impl CoreStat {
             .iter()
             .map(|c| c.frequency())
             .collect::<Vec<u64>>();
+        self.per_core_freq.shrink_to_fit();
 
         let gci = sys.global_cpu_info();
-
-        self.freq = gci.frequency();
         self.util = gci.cpu_usage() as f64;
 
         self
@@ -67,8 +67,6 @@ impl CoreStat {
 
 pub fn sys_utils() -> CoreStat {
     let mut sys = System::new_all();
-
-    sys.refresh_all();
 
     std::thread::sleep(std::time::Duration::from_millis(1000 / TIME_MUL as u64));
 
@@ -91,15 +89,14 @@ pub fn sys_utils() -> CoreStat {
         }
     };
 
-    let comp = sys
-        .components()
-        .into_iter()
-        .filter(|x| x.label().contains("coretemp"));
+    let mut comp = COMP.lock().unwrap();
+    comp.refresh();
+    let temp = comp.into_iter().find(|x| x.label().contains("coretemp"));
 
-    let i_i = comp.clone().count();
-    let s_temp = comp.map(|x| x.temperature()).sum::<f32>();
-
-    let temperature = s_temp / i_i as f32;
+    let temperature = match temp {
+        Some(res) => res.temperature(),
+        None => 0.,
+    };
 
     let per_core_freq = sys
         .cpus()
@@ -109,7 +106,6 @@ pub fn sys_utils() -> CoreStat {
 
     let cache = CACHE_DATA.clone();
     CoreStat {
-        freq: sys.global_cpu_info().frequency(),
         util: sys.global_cpu_info().cpu_usage() as f64,
         threads: t,
         cores: c,
@@ -143,15 +139,14 @@ pub struct Drives {
 }
 
 pub fn get_drives() -> Drives {
-    let mut sys = SYS.lock().unwrap();
+    let disks = Disks::new_with_refreshed_list();
 
     let mut v = vec![];
-    for d in sys.disks_mut() {
-        d.refresh();
+    for d in disks.into_iter() {
         v.push(Drive {
             name: d.name().to_string_lossy().into(),
             mount_point: d.mount_point().to_string_lossy().into(),
-            file_sys: String::from_utf8_lossy(d.file_system()).into(),
+            file_sys: d.file_system().to_string_lossy().into(),
             kind: format!("{:?}", d.kind()),
             removable: d.is_removable(),
             space: d.total_space(),
@@ -172,14 +167,13 @@ pub struct SystemInfo {
 }
 
 pub fn get_system() -> SystemInfo {
-    let sys = SYS.lock().unwrap();
     let default = "".to_owned();
 
     SystemInfo {
-        host_name: sys.host_name().map_or(default.clone(), |res| res),
-        boot_time: sys.boot_time(),
-        distro_id: sys.distribution_id(),
-        kernel_version: sys.kernel_version().map_or(default.clone(), |res| res),
-        os_version: sys.long_os_version().map_or(default, |res| res),
+        host_name: System::host_name().map_or(default.clone(), |res| res),
+        boot_time: System::boot_time(),
+        distro_id: System::distribution_id(),
+        kernel_version: System::kernel_version().map_or(default.clone(), |res| res),
+        os_version: System::long_os_version().map_or(default, |res| res),
     }
 }

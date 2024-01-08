@@ -12,6 +12,7 @@ use crate::{
 
 #[actix_web::main]
 pub async fn server() -> std::io::Result<()> {
+
     HttpServer::new(|| {
         App::new()
             .service(hardware_data)

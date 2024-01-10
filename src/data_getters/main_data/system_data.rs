@@ -170,7 +170,7 @@ pub fn get_system() -> SystemInfo {
     let default = "".to_owned();
 
     SystemInfo {
-        host_name: System::host_name().map_or(default.clone(), |res| res),
+        host_name: System::name().map_or(default.clone(), |res| res),
         boot_time: System::boot_time(),
         distro_id: System::distribution_id(),
         kernel_version: System::kernel_version().map_or(default.clone(), |res| res),

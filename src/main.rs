@@ -1,5 +1,3 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-
 pub mod data_getters;
 mod misc;
 mod server;

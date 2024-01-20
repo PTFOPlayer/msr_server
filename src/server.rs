@@ -1,20 +1,22 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+use actix_cors::Cors;
+use actix_web::{get, main, App, HttpResponse, HttpServer, Responder};
 use serde::Serialize;
 
 use crate::{
-    get_drives,
+    get_drives, get_system,
     misc::{
         self,
         module_parser::{load_modules, ModuleError},
     },
-    process_data, get_system,
+    process_data,
 };
 
-#[actix_web::main]
+#[main]
 pub async fn server() -> std::io::Result<()> {
-
     HttpServer::new(|| {
+        let cors = Cors::permissive();
         App::new()
+            .wrap(cors)
             .service(hardware_data)
             .service(modules_data)
             .service(drives_data)

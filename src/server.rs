@@ -29,10 +29,14 @@ pub async fn server() -> std::io::Result<()> {
 
 #[get("/")]
 async fn hardware_data() -> impl Responder {
-    let result = process_data();
+    let result = match process_data() {
+        Ok(res) => res,
+        Err(err) => return HttpResponse::InternalServerError().body(err),
+    };
+
     match serde_json::to_string(&result) {
-        Ok(res) => HttpResponse::Ok().body(res),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Ok(res) => return HttpResponse::Ok().body(res),
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 

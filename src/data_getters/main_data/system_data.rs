@@ -31,15 +31,22 @@ pub struct CoreStat {
 }
 
 impl CoreStat {
-    pub fn update(mut self, voltage: f64, package_power: f64) -> Self {
+    pub fn update(mut self, voltage: f64, package_power: f64) -> Result<Self, String> {
         self.voltage = voltage;
         self.package_power = package_power;
 
-        let mut sys = SYS.lock().unwrap();
+        let mut sys = match SYS.lock() {
+            Ok(res) => res,
+            Err(err) => return Err(err.to_string()),
+        };
         sys.refresh_cpu();
         sys.refresh_memory();
 
-        let mut comp = COMP.lock().unwrap();
+        let mut comp = match COMP.lock() {
+            Ok(res) => res,
+            Err(err) => return Err(err.to_string()),
+        };
+
         comp.refresh();
         let temp = comp.into_iter().find(|x| x.label().contains("coretemp"));
 
@@ -61,7 +68,7 @@ impl CoreStat {
         let gci = sys.global_cpu_info();
         self.util = gci.cpu_usage() as f64;
 
-        self
+        Ok(self)
     }
 }
 

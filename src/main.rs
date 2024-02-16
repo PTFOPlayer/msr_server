@@ -9,7 +9,7 @@ pub use data_getters::*;
 const TIME_MUL: i32 = 5;
 
 #[inline(always)]
-fn process_data() -> CoreStat {
+fn process_data() -> Result<CoreStat, String> {
     let data = CORE_STAT.clone().update(get_voltage(), get_power());
     data
 }

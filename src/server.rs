@@ -22,7 +22,7 @@ pub async fn server() -> std::io::Result<()> {
             .service(drives_data)
             .service(system_data)
     })
-    .bind(("127.0.0.1", 8000))?
+    .bind(("127.0.0.1", 7172))?
     .run()
     .await
 }
